@@ -75,22 +75,14 @@ public class AddNewAssetCommand implements CommandProvider {
     public Set<String> getCommands() {
         return Collections.unmodifiableSet(COMMANDS);
     }
+    
 
     @Override
     public CompletableFuture<Object> runCommand(String command, List<Object> arguments) {
         CompletableFuture future = new CompletableFuture();
-        Steps.NextStepProvider nsProvider = Steps.NextStepProvider.builder()
-                    .stepForClass(ItemTypeStep.class, (s) -> {
-                        if ("Databases".equals(s.getValue())) {
-                            return new DatabaseConnectionStep();
-                        }
-                        return new TenancyStep();
-                    }).stepForClass(TenancyStep.class, (s) -> new CompartmentStep())
-                    .stepForClass(CompartmentStep.class, (s) -> new SuggestedStep(null))
-                    .stepForClass(ProjectStep.class, (s) -> new ItemTypeStep())
-                    .build();
+        Steps.NextStepProvider steps = getSteps();        
         Steps.getDefault()
-                .executeMultistep(new ProjectStep(), Lookups.fixed(nsProvider))
+                .executeMultistep(new ProjectStep(), Lookups.fixed(steps))
                 .thenAccept(values -> {
                     Project project = values.getValueForStep(ProjectStep.class);
                     CompletableFuture<? extends OCIItem> item = null;
@@ -140,5 +132,18 @@ public class AddNewAssetCommand implements CommandProvider {
                     });
                 });
         return future;
+    }
+    
+    protected Steps.NextStepProvider getSteps() {
+        return Steps.NextStepProvider.builder()
+                    .stepForClass(ProjectStep.class, (s) -> new ItemTypeStep())
+                    .stepForClass(ItemTypeStep.class, (s) -> {
+                        if ("Databases".equals(s.getValue())) {
+                            return new DatabaseConnectionStep();
+                        }
+                        return new TenancyStep();
+                    }).stepForClass(TenancyStep.class, (s) -> new CompartmentStep())
+                    .stepForClass(CompartmentStep.class, (s) -> new SuggestedStep(null))
+                    .build();
     }
 }
