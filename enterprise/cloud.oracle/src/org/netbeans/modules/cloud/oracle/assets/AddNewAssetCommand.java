@@ -88,30 +88,17 @@ public class AddNewAssetCommand implements CommandProvider {
                     CompletableFuture<? extends OCIItem> item = null;
                     String itemType = values.getValueForStep(ItemTypeStep.class);
                     if ("Databases".equals(itemType)) {
-                        DatabaseItem i = values.getValueForStep(DatabaseConnectionStep.class);
-                        if (i == null) {
-                            item = new AddADBAction().addADB();
-                        } else {
-                            item = CompletableFuture.completedFuture(i);
-                        }
+                        item = resolveDBItem(values);
                     } else {
-                        OCIItem i = values.getValueForStep(SuggestedStep.class);
-                        if (i == null) {
+                        item = resolveSuggestedItem(values);
+                        if (item == null) {
                             future.cancel(true);
                             return;
-                        } else {
-                            item = CompletableFuture.completedFuture(i);
-                        }
+                        } 
                     }
                     
                     if (values.getValueForStep(SuggestedStep.class) instanceof CreateNewResourceItem) {
-                        OCIItemCreator creator = OCIItemCreator.getCreator(itemType);
-                        if (creator != null) {
-                            CompletableFuture<Map<String, Object>> vals = creator.steps();
-                            item = vals.thenCompose(params -> {
-                                return creator.create(values, params);
-                            });
-                        }
+                        item = createNewOCIItem(itemType, values);
                     }
                     
                     item.thenAccept(i -> {
@@ -132,6 +119,33 @@ public class AddNewAssetCommand implements CommandProvider {
                     });
                 });
         return future;
+    }
+
+    private CompletableFuture<? extends OCIItem> createNewOCIItem(String itemType, Steps.Values values) {
+        OCIItemCreator creator = OCIItemCreator.getCreator(itemType);
+        if (creator == null) {
+            return null;
+        }
+        CompletableFuture<Map<String, Object>> vals = creator.steps();
+        return vals.thenCompose(params -> {
+            return creator.create(values, params);
+        });
+    }
+
+    private CompletableFuture<? extends OCIItem> resolveSuggestedItem(Steps.Values values) {
+        OCIItem suggestedItem = values.getValueForStep(SuggestedStep.class);
+        if (suggestedItem == null) {
+            return null;
+        }
+        return CompletableFuture.completedFuture(suggestedItem);
+    }
+
+    private CompletableFuture<? extends OCIItem> resolveDBItem(Steps.Values values) {
+        DatabaseItem databaseItem = values.getValueForStep(DatabaseConnectionStep.class);
+        if (databaseItem == null) {
+            return new AddADBAction().addADB();
+        }
+        return CompletableFuture.completedFuture(databaseItem);
     }
     
     protected Steps.NextStepProvider getSteps() {
