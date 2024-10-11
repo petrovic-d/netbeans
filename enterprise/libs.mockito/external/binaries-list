@@ -1,0 +1,20 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+FAA88B96DB3AEB96A93E83DEC7491345BFBFC414 org.mockito:mockito-core:5.9.0
+3072DA2184D49CF642D22BADEE2CE36B2D6DFB92 net.bytebuddy:byte-buddy:1.15.1
+D5C8CBE2C1B94A5EFA3F9F0736E1B3F00B5F6103 net.bytebuddy:byte-buddy-agent:1.15.1
+675CBE121A68019235D27F6C34B4F0AC30E07418 org.objenesis:objenesis:3.4
