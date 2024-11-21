@@ -80,6 +80,17 @@ public interface RunConfig {
     String getActionName();
     
     /**
+     * Options/switches passed to maven.
+     * @return a read-only copy of the current maven options
+     * @since 2.166
+     */
+    @NonNull Map<? extends String,? extends String> getOptions();
+    
+    void setOptions(@NonNull String key, @NullAllowed String value);
+
+    void addOptions(@NonNull Map<String, String> options);
+    
+    /**
      * Properties to be used in execution.
      * @return a read-only copy of the current properties (possibly inherited from the parent)
      */

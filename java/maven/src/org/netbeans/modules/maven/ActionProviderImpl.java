@@ -132,6 +132,7 @@ public class ActionProviderImpl implements ActionProvider {
         "javadoc", //NOI18N
         COMMAND_TEST,
         COMMAND_TEST_SINGLE,
+        COMMAND_TEST_PARALLEL,
         SingleMethod.COMMAND_RUN_SINGLE_METHOD,
         SingleMethod.COMMAND_DEBUG_SINGLE_METHOD,
             
@@ -394,7 +395,8 @@ public class ActionProviderImpl implements ActionProvider {
             action.equals(ActionProvider.COMMAND_PROFILE) ||
             action.equals(ActionProvider.COMMAND_REBUILD) ||
             action.equals(ActionProvider.COMMAND_RUN) ||
-            action.equals(ActionProvider.COMMAND_TEST)) 
+            action.equals(ActionProvider.COMMAND_TEST) ||
+            action.equals(ActionProvider.COMMAND_TEST_PARALLEL)) 
         {
             if (!ModuleInfoUtils.checkModuleInfoAndCompilerFit(proj)) {
                 if (NbPreferences.forModule(ActionProviderImpl.class).getBoolean(SHOW_COMPILER_TOO_OLD_WARNING, true)) {
@@ -456,6 +458,8 @@ public class ActionProviderImpl implements ActionProvider {
         } else if (ActionProvider.COMMAND_PROFILE.equals(action)) {
             title = TXT_Profile(prjLabel);
         } else if (ActionProvider.COMMAND_TEST.equals(action)) {
+            title = TXT_Test(prjLabel);
+        } else if (ActionProvider.COMMAND_TEST_PARALLEL.equals(action)) {
             title = TXT_Test(prjLabel);
         } else if (action.startsWith(ActionProvider.COMMAND_RUN_SINGLE)) {
             title = TXT_Run(dobjName);
@@ -607,8 +611,10 @@ public class ActionProviderImpl implements ActionProvider {
             acts.addAll(conf.getActiveConfiguration().getActivatedProfiles());
             rc.setActivatedProfiles(acts);
             Map<String, String> props = new HashMap<>(rc.getProperties());
+            Map<String, String> options = new HashMap<>(rc.getOptions());
             props.putAll(conf.getActiveConfiguration().getProperties());
             rc.addProperties(props);
+            rc.addOptions(options);
             rc.setTaskDisplayName(TXT_Build(proj.getLookup().lookup(NbMavenProject.class).getMavenProject().getArtifactId()));
             return rc;
         }

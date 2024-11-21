@@ -26,7 +26,6 @@ import org.netbeans.modules.gradle.api.execute.RunConfig;
 import org.netbeans.modules.gradle.api.execute.RunUtils;
 import org.netbeans.modules.gradle.actions.ActionToTaskUtils;
 import org.netbeans.modules.gradle.execute.GradleExecutorOptionsPanel;
-import org.netbeans.modules.gradle.spi.actions.GradleActionsProvider;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -213,6 +212,9 @@ public class ActionProviderImpl implements ActionProvider {
                 title = TXT_Profile(prjLabel);
                 break;
             case ActionProvider.COMMAND_TEST:
+                title = TXT_Test(prjLabel);
+                break;
+            case ActionProvider.COMMAND_TEST_PARALLEL:
                 title = TXT_Test(prjLabel);
                 break;
             case ActionProvider.COMMAND_RUN_SINGLE:

@@ -245,7 +245,8 @@ public final class NbLaunchRequestHandler {
             context.setSourcePaths((String[]) launchArguments.get("sourcePaths"));
         }
         String singleMethod = (String)launchArguments.get("methodName");
-        activeLaunchHandler.nbLaunch(file, preferProjActions, nativeImageFile, singleMethod, launchArguments, context, !noDebug, testRun, new OutputListener(context)).thenRun(() -> {
+        boolean testInParallel = (Boolean) launchArguments.getOrDefault("testInParallel", Boolean.FALSE);
+        activeLaunchHandler.nbLaunch(file, preferProjActions, nativeImageFile, singleMethod, launchArguments, context, !noDebug, testRun, new OutputListener(context), testInParallel).thenRun(() -> {
             activeLaunchHandler.postLaunch(launchArguments, context);
             resultFuture.complete(null);
         }).exceptionally(e -> {

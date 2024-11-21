@@ -445,6 +445,18 @@ public class MavenCommandLineExecutor extends AbstractMavenExecutor {
                 LOGGER.log(Level.FINE, "Could not canonicalize " + basedir, x);
             }
         }
+    
+        for (Map.Entry<? extends String, ? extends String> entry : config.getOptions().entrySet()) {
+            String key = entry.getKey();
+            String value = quote2apos(entry.getValue());
+            if (MavenCommandLineOptions.optionRequiresValue(key) && (value.isBlank() || value.equals("${" + key + "}"))) { //NOI18N
+                continue;
+            }
+            toRet.add("--" + key);
+            if (value != null && !value.isBlank()) {
+                toRet.add(value);
+            }
+        }
 
         //#164234
         //if maven.bat file is in space containing path, we need to quote with simple quotes.

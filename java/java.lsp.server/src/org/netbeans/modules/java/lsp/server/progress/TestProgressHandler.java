@@ -24,9 +24,12 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import org.eclipse.lsp4j.debug.OutputEventArguments;
 import org.eclipse.lsp4j.debug.services.IDebugProtocolClient;
 import org.netbeans.api.extexecution.print.LineConvertors;
+import org.netbeans.api.project.Project;
+import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.modules.gsf.testrunner.api.Report;
 import org.netbeans.modules.gsf.testrunner.api.Status;
 import org.netbeans.modules.gsf.testrunner.api.TestSession;
@@ -43,7 +46,7 @@ import org.openide.filesystems.FileObject;
  *
  * @author Dusan Balek
  */
-public final class TestProgressHandler implements TestResultDisplayHandler.Spi<TestProgressHandler> {
+public final class TestProgressHandler implements TestResultDisplayHandler.Spi<ModuleInfo> {
 
     private final NbCodeLanguageClient lspClient;
     private final IDebugProtocolClient debugClient;
@@ -56,12 +59,12 @@ public final class TestProgressHandler implements TestResultDisplayHandler.Spi<T
     }
 
     @Override
-    public TestProgressHandler create(TestSession session) {
-        return this;
+    public ModuleInfo create(TestSession session) {
+        return getModuleInfo(session);
     }
 
     @Override
-    public void displayOutput(TestProgressHandler token, String text, boolean error) {
+    public void displayOutput(ModuleInfo token, String text, boolean error) {
         if (text != null) {
             OutputEventArguments output = new OutputEventArguments();
             output.setOutput(text.trim() + "\n");
@@ -70,17 +73,17 @@ public final class TestProgressHandler implements TestResultDisplayHandler.Spi<T
     }
 
     @Override
-    public void displaySuiteRunning(TestProgressHandler token, String suiteName) {
-        lspClient.notifyTestProgress(new TestProgressParams(uri, new TestSuiteInfo(suiteName, TestSuiteInfo.State.Started)));
+    public void displaySuiteRunning(ModuleInfo token, String suiteName) {
+        lspClient.notifyTestProgress(new TestProgressParams(uri, new TestSuiteInfo(suiteName, TestSuiteInfo.State.Started).setModuleName(token.getModuleName()).setModulePath(token.getModulePath())));
     }
 
     @Override
-    public void displaySuiteRunning(TestProgressHandler token, TestSuite suite) {
-        lspClient.notifyTestProgress(new TestProgressParams(uri, new TestSuiteInfo(suite.getName(), TestSuiteInfo.State.Started)));
+    public void displaySuiteRunning(ModuleInfo token, TestSuite suite) {
+        lspClient.notifyTestProgress(new TestProgressParams(uri, new TestSuiteInfo(suite.getName(), TestSuiteInfo.State.Started).setModuleName(token.getModuleName()).setModulePath(token.getModulePath())));
     }
 
     @Override
-    public void displayReport(TestProgressHandler token, Report report) {
+    public void displayReport(ModuleInfo token, Report report) {
         Map<String, FileObject> fileLocations = new HashMap<>();
         Map<String, TestSuiteInfo.TestCaseInfo> testCases = new LinkedHashMap<>();
         String className = report.getSuiteClassName();
@@ -108,20 +111,21 @@ public final class TestProgressHandler implements TestResultDisplayHandler.Spi<T
         }
         String state = statusToState(report.getStatus());
         FileObject fo = fileLocations.size() == 1 ? fileLocations.values().iterator().next() : null;
-        lspClient.notifyTestProgress(new TestProgressParams(uri, new TestSuiteInfo(report.getSuiteClassName(),
+        
+        lspClient.notifyTestProgress(new TestProgressParams(uri, new TestSuiteInfo(report.getSuiteClassName(), token.getModuleName(), token.getModulePath(),
                 fo != null ? Utils.toUri(fo) : null, null, state, new ArrayList<>(testCases.values()))));
     }
 
     @Override
-    public void displayMessage(TestProgressHandler token, String message) {
+    public void displayMessage(ModuleInfo token, String message) {
     }
 
     @Override
-    public void displayMessageSessionFinished(TestProgressHandler token, String message) {
+    public void displayMessageSessionFinished(ModuleInfo token, String message) {
     }
 
     @Override
-    public int getTotalTests(TestProgressHandler token) {
+    public int getTotalTests(ModuleInfo token) {
         return 0;
     }
 
@@ -143,5 +147,14 @@ public final class TestProgressHandler implements TestResultDisplayHandler.Spi<T
             default:
                 throw new IllegalStateException("Unexpected testsuite status: " + status);
         }
+    }
+
+    private static Pattern PATTERN = Pattern.compile("Gradle Test Run :(.*):test");
+
+    private static ModuleInfo getModuleInfo(TestSession session) {
+        Project project = session.getProject();
+        String moduleName = project != null ? ProjectUtils.getInformation(project).getDisplayName() : null;
+        String modulePath = project != null ? project.getProjectDirectory().getPath() : null;
+        return new ModuleInfo(moduleName, modulePath);
     }
 }

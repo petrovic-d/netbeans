@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.netbeans.api.annotations.common.CheckForNull;
+import org.netbeans.api.extexecution.base.ExplicitProcessParameters;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.java.queries.UnitTestForSourceQuery;
 import org.netbeans.api.java.source.ClasspathInfo;
@@ -72,6 +73,7 @@ public class DefaultReplaceTokenProvider implements ReplaceTokenProvider, Action
     static final String CLASSNAME = "className";//NOI18N
     static final String CLASSNAME_EXT = "classNameWithExtension";//NOI18N
     static final String PACK_CLASSNAME = "packageClassName";//NOI18N
+    static final String PROJECTS = "projects";//NOI18N
     static final String ABSOLUTE_PATH = "absolutePathName";
     public static final String METHOD_NAME = "nb.single.run.methodName"; //NOI18N
     private static final String VARIABLE_PREFIX = "var."; //NOI18N
@@ -101,6 +103,8 @@ public class DefaultReplaceTokenProvider implements ReplaceTokenProvider, Action
 
     @Override public Map<String, String> createReplacements(String actionName, Lookup lookup) {
         FileObject[] fos = extractFileObjectsfromLookup(lookup);
+        List<String> projects = extractProjectsFromLookup(lookup);
+        
         SourceGroup group = findGroup(ProjectUtils.getSources(project).getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA), fos);
         HashMap<String, String> replaceMap = new HashMap<String, String>();
         // read environment variables in the IDE and prefix them with "env." just in case someone uses it as variable in the action mappings
@@ -138,7 +142,8 @@ public class DefaultReplaceTokenProvider implements ReplaceTokenProvider, Action
                     if (!isTest && !(ActionProvider.COMMAND_TEST_SINGLE.equals(actionName) ||
                                      ActionProvider.COMMAND_DEBUG_TEST_SINGLE.equals(actionName) ||
                                      ActionProvider.COMMAND_PROFILE_TEST_SINGLE.equals(actionName) ||
-                                     ActionProvider.COMMAND_TEST.equals(actionName))) {
+                                     ActionProvider.COMMAND_TEST.equals(actionName) ||
+                                     ActionProvider.COMMAND_TEST_PARALLEL.equals(actionName))) {
                         // Execution can not have more files separated by commas. Only test can.
                         break;
                     } else {
@@ -229,6 +234,9 @@ public class DefaultReplaceTokenProvider implements ReplaceTokenProvider, Action
         if (classnameExt.length() > 0) { //#213671
             replaceMap.put(CLASSNAME_EXT, classnameExt.toString());
         }
+        if (projects != null && !projects.isEmpty()) {
+            replaceMap.put(PROJECTS, String.join(",", projects));
+        }
 
         Collection<? extends SingleMethod> methods = lookup.lookupAll(SingleMethod.class);
         if (methods.size() == 1) {
@@ -245,6 +253,11 @@ public class DefaultReplaceTokenProvider implements ReplaceTokenProvider, Action
             replaceMap.put(CLASSPATHSCOPE,"runtime"); //NOI18N
         }
         return replaceMap;
+    }
+    
+    private List<String> extractProjectsFromLookup(Lookup lookup) {
+        ExplicitProcessParameters parameters = lookup.lookup(ExplicitProcessParameters.class);
+        return parameters == null ? null : parameters.getProjects();
     }
 
     private void addSelectedFiles(boolean testRoots, FileObject[] candidates, HashSet<String> test) {

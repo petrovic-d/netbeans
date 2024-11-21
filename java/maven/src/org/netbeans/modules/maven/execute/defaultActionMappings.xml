@@ -79,6 +79,18 @@
         </goals>
     </action>
     <action>
+        <actionName>test.parallel</actionName>
+        <packagings>
+            <packaging>*</packaging>
+        </packagings>
+        <options>
+            <threads>0.5C</threads>
+        </options>
+        <goals>
+            <goal>test</goal>
+        </goals>
+    </action>
+    <action>
         <actionName>test.single</actionName>
         <packagings>
             <packaging>*</packaging>

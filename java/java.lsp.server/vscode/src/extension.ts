@@ -74,6 +74,7 @@ const listeners = new Map<string, string[]>();
 export let client: Promise<NbLanguageClient>;
 export let clientRuntimeJDK : string | null = null;
 export const MINIMAL_JDK_VERSION = 17;
+const TEST_PROGRESS_EVENT: string = "testProgress";
 
 let testAdapter: NbTestAdapter | undefined;
 let nbProcess : ChildProcess | null = null;
@@ -882,7 +883,7 @@ export function activate(context: ExtensionContext): VSNetBeansAPI {
         });
     }
 
-    const runDebug = async (noDebug: boolean, testRun: boolean, uri: any, methodName?: string, launchConfiguration?: string, project : boolean = false, ) => {
+    const runDebug = async (noDebug: boolean, testRun: boolean, uri: any, methodName?: string, launchConfiguration?: string, project : boolean = false, testInParallel : boolean = false, projects: string[] | undefined = undefined) => {
     const docUri = contextUri(uri);
         if (docUri) {
             // attempt to find the active configuration in the vsode launch settings; undefined if no config is there.
@@ -914,8 +915,13 @@ export function activate(context: ExtensionContext): VSNetBeansAPI {
             const debugOptions : vscode.DebugSessionOptions = {
                 noDebug: noDebug,
             }
-            
-            
+            if (testInParallel) {
+                debugConfig['testInParallel'] = testInParallel;
+            }
+            if (projects?.length) {
+                debugConfig['projects'] = projects;
+            }
+
             const ret = await vscode.debug.startDebugging(workspaceFolder, debugConfig, debugOptions);
             return ret ? new Promise((resolve) => {
                 const listener = vscode.debug.onDidTerminateDebugSession(() => {
@@ -925,9 +931,13 @@ export function activate(context: ExtensionContext): VSNetBeansAPI {
             }) : ret;
         }
     };
-    
-    context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.run.test', async (uri, methodName?, launchConfiguration?) => {
-        await runDebug(true, true, uri, methodName, launchConfiguration);
+
+    context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.run.test.parallel', async (projects?) => {        
+        testAdapter?.run(new vscode.TestRunRequest(), new vscode.CancellationTokenSource().token, true, projects);
+    }));
+
+    context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.run.test', async (uri, methodName?, launchConfiguration?, testInParallel?, projects?) => {
+        await runDebug(true, true, uri, methodName, launchConfiguration, false, testInParallel, projects);
     }));
     context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.debug.test', async (uri, methodName?, launchConfiguration?) => {
         await runDebug(false, true, uri, methodName, launchConfiguration);
@@ -1598,6 +1608,10 @@ function doActivateWithJDK(specifiedJDK: string | null, context: ExtensionContex
             return data;
         });
         c.onNotification(TestProgressNotification.type, param => {
+            const testProgressListeners = listeners.get(TEST_PROGRESS_EVENT);
+            testProgressListeners?.forEach(listener => {
+                commands.executeCommand(listener, param);
+            })
             if (testAdapter) {
                 testAdapter.testProgress(param.suite);
             }

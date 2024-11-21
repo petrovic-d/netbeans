@@ -95,6 +95,7 @@ public final class ExplicitProcessParameters {
     final int position;
     private final List<String>    launcherArguments;
     private final List<String>    arguments;
+    private final List<String>    projects;
     private final boolean  replaceArgs;
     private final boolean  replaceLauncherArgs;
     private final File workingDirectory;
@@ -102,17 +103,18 @@ public final class ExplicitProcessParameters {
 
     private ExplicitProcessParameters(int position, List<String> launcherArguments, 
             List<String> arguments, boolean appendArgs, boolean appendLauncherArgs,
-            File workingDirectory, Map<String, String> environmentVars) {
+            File workingDirectory, Map<String, String> environmentVars, List<String> projects) {
         this.position = position;
         this.launcherArguments = launcherArguments == null ? null : Collections.unmodifiableList(launcherArguments);
         this.arguments = arguments == null ? null : Collections.unmodifiableList(arguments);
+        this.projects = projects == null ? null : Collections.unmodifiableList(projects);
         this.replaceArgs = appendArgs;
         this.replaceLauncherArgs = appendLauncherArgs;
         this.workingDirectory = workingDirectory;
         this.environmentVars = environmentVars == null ? null : Collections.unmodifiableMap(environmentVars);
     }
     
-    private static final ExplicitProcessParameters EMPTY = new ExplicitProcessParameters(0, null, null, false, false, null, null);
+    private static final ExplicitProcessParameters EMPTY = new ExplicitProcessParameters(0, null, null, false, false, null, null, null);
     
     /**
      * Returns an empty instance of parameters that has no effect. DO NOT check for emptiness by
@@ -146,6 +148,16 @@ public final class ExplicitProcessParameters {
     public List<String> getArguments() {
         return arguments;
     }
+    
+    /**
+     * Returns the projects to be passed. Returns {@code null} if the object does not
+     * want to alter the project list. 
+     * @return projects to be passed or {@code null} if the project list should not be altered.
+     */
+    public List<String> getProjects() {
+        return projects;
+    }
+
 
     /**
      * Returns the launcher arguments to be passed. Returns {@code null} if the object does not
@@ -282,6 +294,7 @@ public final class ExplicitProcessParameters {
         private int position = 0;
         private List<String> launcherArguments = null;
         private List<String> arguments = null;
+        private List<String> projects = null;
         private Boolean  replaceArgs;
         private Boolean  replaceLauncherArgs;
         private File workingDirectory = null;
@@ -334,6 +347,42 @@ public final class ExplicitProcessParameters {
                 return this;
             }
             return args(Arrays.asList(args));
+        }
+        
+        private void initProjects() {
+            if (projects == null) {
+                projects = new ArrayList<>();
+            }
+        }
+        
+        /**
+         * Appends a single project. {@code null} is ignored.
+         * @param p project
+         * @return the builder
+         */
+        public Builder project(@NullAllowed String p) {
+            if (p == null) {
+                return this;
+            }
+            initProjects();
+            projects.add(p);
+            return this;
+        }
+        
+        /**
+         * Appends projects in the list. {@code null} is ignored as well as {@code null}
+         * items in the list.
+         * @param projects project list
+         * @return the builder
+         */
+        public Builder projects(@NullAllowed List<String> projects) {
+            if (projects == null) {
+                return this;
+            }
+            // init even if the list is empty.
+            initProjects();
+            projects.forEach(this::project);
+            return this;
         }
         
         private void initLauncherArgs() {
@@ -524,7 +573,7 @@ public final class ExplicitProcessParameters {
             return new ExplicitProcessParameters(position, launcherArguments, arguments, 
                     // if no args / launcher args given and no explicit instruction on append,
                     // make the args appending.
-                    aa, apa, workingDirectory, environmentVars);
+                    aa, apa, workingDirectory, environmentVars, projects);
         }
     }
 }

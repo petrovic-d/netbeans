@@ -125,7 +125,8 @@ public abstract class NbLaunchDelegate {
 
     public final CompletableFuture<Void> nbLaunch(FileObject toRun, boolean preferProjActions, @NullAllowed File nativeImageFile,
                                                   @NullAllowed String method, Map<String, Object> launchArguments, DebugAdapterContext context,
-                                                  boolean debug, boolean testRun, Consumer<NbProcessConsole.ConsoleMessage> consoleMessages) {
+                                                  boolean debug, boolean testRun, Consumer<NbProcessConsole.ConsoleMessage> consoleMessages,
+                                                  boolean testInParallel) {
         CompletableFuture<Void> launchFuture = new CompletableFuture<>();
         NbProcessConsole ioContext = new NbProcessConsole(consoleMessages);
         SingleMethod singleMethod;
@@ -176,7 +177,7 @@ public abstract class NbLaunchDelegate {
                 }
             }
             W writer = new W();
-            CompletableFuture<Pair<ActionProvider, String>> commandFuture = findTargetWithPossibleRebuild(prj, preferProjActions, toRun, singleMethod, debug, testRun, ioContext);
+            CompletableFuture<Pair<ActionProvider, String>> commandFuture = findTargetWithPossibleRebuild(prj, preferProjActions, toRun, singleMethod, debug, testRun, ioContext, testInParallel);
             commandFuture.thenAccept((providerAndCommand) -> {
                 ExplicitProcessParameters params = createExplicitProcessParameters(launchArguments);
                 OperationContext ctx = OperationContext.find(Lookup.getDefault());
@@ -357,6 +358,8 @@ public abstract class NbLaunchDelegate {
     private static ExplicitProcessParameters createExplicitProcessParameters(Map<String, Object> launchArguments) {
         List<String> args = argsToStringList(launchArguments.get("args"));
         List<String> vmArgs = argsToStringList(launchArguments.get("vmArgs"));
+        List<String> projects = argsToStringList(launchArguments.get("projects"));
+
         String cwd = Objects.toString(launchArguments.get("cwd"), null);
         Object envObj = launchArguments.get("env");
         Map<String, String> env = envObj != null ? (Map<String, String>) envObj : Collections.emptyMap();
@@ -373,6 +376,9 @@ public abstract class NbLaunchDelegate {
         }
         if (!env.isEmpty()) {
             bld.environmentVariables(env);
+        }
+        if (!projects.isEmpty()) {
+            bld.projects(projects);
         }
         ExplicitProcessParameters params = bld.build();
         return params;
@@ -486,8 +492,8 @@ public abstract class NbLaunchDelegate {
         }
     }
 
-    private static CompletableFuture<Pair<ActionProvider, String>> findTargetWithPossibleRebuild(Project proj, boolean preferProjActions, FileObject toRun, SingleMethod singleMethod, boolean debug, boolean testRun, NbProcessConsole ioContext) throws IllegalArgumentException {
-        Pair<ActionProvider, String> providerAndCommand = findTarget(proj, preferProjActions, toRun, singleMethod, debug, testRun);
+    private static CompletableFuture<Pair<ActionProvider, String>> findTargetWithPossibleRebuild(Project proj, boolean preferProjActions, FileObject toRun, SingleMethod singleMethod, boolean debug, boolean testRun, NbProcessConsole ioContext, boolean testInParallel) throws IllegalArgumentException {
+        Pair<ActionProvider, String> providerAndCommand = findTarget(proj, preferProjActions, toRun, singleMethod, debug, testRun, testInParallel);
         if (providerAndCommand != null) {
             return CompletableFuture.completedFuture(providerAndCommand);
         }
@@ -503,7 +509,7 @@ public abstract class NbLaunchDelegate {
             @Override
             public void finished(boolean success) {
                 if (success) {
-                    Pair<ActionProvider, String> providerAndCommand = findTarget(proj, preferProjActions, toRun, singleMethod, debug, testRun);
+                    Pair<ActionProvider, String> providerAndCommand = findTarget(proj, preferProjActions, toRun, singleMethod, debug, testRun, testInParallel);
                     if (providerAndCommand != null) {
                         afterBuild.complete(providerAndCommand);
                         return;
@@ -536,7 +542,7 @@ public abstract class NbLaunchDelegate {
         return afterBuild;
     }
 
-    protected static @CheckForNull Pair<ActionProvider, String> findTarget(Project prj, boolean preferProjActions, FileObject toRun, SingleMethod singleMethod, boolean debug, boolean testRun) {
+    protected static @CheckForNull Pair<ActionProvider, String> findTarget(Project prj, boolean preferProjActions, FileObject toRun, SingleMethod singleMethod, boolean debug, boolean testRun, boolean testInParallel) {
         ClassPath sourceCP = ClassPath.getClassPath(toRun, ClassPath.SOURCE);
         FileObject fileRoot = sourceCP != null ? sourceCP.findOwnerRoot(toRun) : null;
         boolean mainSource;
@@ -568,7 +574,8 @@ public abstract class NbLaunchDelegate {
                 actions = debug ? mainSource ? new String[] {ActionProvider.COMMAND_DEBUG_SINGLE}
                                              : new String[] {ActionProvider.COMMAND_DEBUG_TEST_SINGLE, ActionProvider.COMMAND_DEBUG_SINGLE}
                                 : mainSource ? new String[] {ActionProvider.COMMAND_RUN_SINGLE}
-                                             : new String[] {ActionProvider.COMMAND_TEST_SINGLE, ActionProvider.COMMAND_RUN_SINGLE};
+                                             : testInParallel ? new String[] {ActionProvider.COMMAND_TEST_PARALLEL, ActionProvider.COMMAND_TEST}
+                                                              : new String[] {ActionProvider.COMMAND_TEST_SINGLE, ActionProvider.COMMAND_RUN_SINGLE};
             }
         }
 
