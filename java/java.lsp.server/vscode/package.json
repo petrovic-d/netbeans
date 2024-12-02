@@ -514,10 +514,6 @@
 		],
 		"commands": [
 			{
-				"command": "nbls.run.test.parallel",
-				"title": "Run Tests in parallel"
-			},
-			{
 				"command": "nbls.node.properties.edit",
 				"title": "Properties"
 			},
@@ -841,10 +837,6 @@
 				}
 			],
 			"commandPalette": [
-				{
-					"command": "nbls.run.test.parallel",
-					"when": "nbJavaLSReady && config.netbeans.javaSupport.enabled"
-				},
 				{
 					"command": "nbls.workspace.new",
 					"when": "nbJavaLSReady"

@@ -70,12 +70,11 @@ import { shouldHideGuideFor } from './panels/guidesUtil';
 const API_VERSION : string = "1.0";
 export const COMMAND_PREFIX : string = "nbls";
 const DATABASE: string = 'Database';
-const listeners = new Map<string, string[]>();
+export const listeners = new Map<string, string[]>();
 export let client: Promise<NbLanguageClient>;
 export let clientRuntimeJDK : string | null = null;
 export const MINIMAL_JDK_VERSION = 17;
-const TEST_PROGRESS_EVENT: string = "testProgress";
-
+export const TEST_PROGRESS_EVENT: string = "testProgress";
 let testAdapter: NbTestAdapter | undefined;
 let nbProcess : ChildProcess | null = null;
 let debugPort: number = -1;
@@ -933,7 +932,9 @@ export function activate(context: ExtensionContext): VSNetBeansAPI {
     };
 
     context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.run.test.parallel', async (projects?) => {        
-        testAdapter?.run(new vscode.TestRunRequest(), new vscode.CancellationTokenSource().token, true, projects);
+        if (projects) {
+            testAdapter?.registerRunInParallelProfile(projects);
+        }
     }));
 
     context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.run.test', async (uri, methodName?, launchConfiguration?, testInParallel?, projects?) => {
@@ -1610,7 +1611,7 @@ function doActivateWithJDK(specifiedJDK: string | null, context: ExtensionContex
         c.onNotification(TestProgressNotification.type, param => {
             const testProgressListeners = listeners.get(TEST_PROGRESS_EVENT);
             testProgressListeners?.forEach(listener => {
-                commands.executeCommand(listener, param);
+                commands.executeCommand(listener, param.suite);
             })
             if (testAdapter) {
                 testAdapter.testProgress(param.suite);

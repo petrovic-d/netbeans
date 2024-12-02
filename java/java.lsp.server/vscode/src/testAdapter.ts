@@ -21,7 +21,7 @@
 import { commands, debug, tests, workspace, CancellationToken, TestController, TestItem, TestRunProfileKind, TestRunRequest, Uri, TestRun, TestMessage, Location, Position, MarkdownString, TestRunProfile } from "vscode";
 import * as path from 'path';
 import { asRange, TestCase, TestSuite } from "./protocol";
-import { COMMAND_PREFIX } from "./extension";
+import { COMMAND_PREFIX, listeners, TEST_PROGRESS_EVENT } from "./extension";
 
 type SuiteState = 'enqueued' | 'started' | 'passed' | 'failed' | 'skipped' | 'errored';
 
@@ -42,6 +42,11 @@ export class NbTestAdapter {
         this.disposables.push(this.testController);
         this.load();
         this.suiteStates = new Map();
+    }
+
+    public registerRunInParallelProfile(projects: string[]) {
+        const runHandler = (request: TestRunRequest, cancellation: CancellationToken) => this.run(request, cancellation, true, projects);
+        this.testController.createRunProfile("Run Tests In Parallel", TestRunProfileKind.Run, runHandler, true);
     }
 
     async load(): Promise<void> {
@@ -102,12 +107,14 @@ export class NbTestAdapter {
         if (this.currentRun) {
             switch (state) {
                 case 'enqueued':
+                    this.dispatchTestSuiteEvent(state, item);
                     this.itemsToRun?.add(item);
                     this.currentRun.enqueued(item);
                     break;
+                case 'skipped':
+                    this.dispatchTestSuiteEvent(state, item);
                 case 'started':
                 case 'passed':
-                case 'skipped':
                     this.itemsToRun?.delete(item);
                     this.currentRun[state](item);
                     break;
@@ -121,6 +128,21 @@ export class NbTestAdapter {
             if (!noPassDown) {
                 item.children.forEach(child => this.set(child, state, message, noPassDown));
             }
+        }
+    }
+    
+    dispatchTestSuiteEvent(state: SuiteState, testItem: TestItem): void {
+        if (testItem.parent && testItem.children.size > 0) {
+            const testProgressListeners = listeners.get(TEST_PROGRESS_EVENT);
+            testProgressListeners?.forEach(listener => {
+                commands.executeCommand(listener, {
+                    name: testItem.id,
+                    moduleName: testItem.parent?.id,
+                    modulePath: testItem.parent?.uri?.path,
+                    state,
+                    
+                });
+            })
         }
     }
 
