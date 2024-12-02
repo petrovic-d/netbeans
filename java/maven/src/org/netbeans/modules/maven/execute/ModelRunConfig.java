@@ -82,7 +82,7 @@ public final class ModelRunConfig extends BeanRunConfig {
         for (Map.Entry<String,String> entry : model.getOptions().entrySet()) {
             String key = entry.getKey();
             String value = entry.getValue();
-            setOptions(key, value);
+            setOption(key, value);
         }
         setGoals(model.getGoals());
         setExecutionDirectory(ActionToGoalUtils.resolveProjectExecutionBasedir(mod, proj));

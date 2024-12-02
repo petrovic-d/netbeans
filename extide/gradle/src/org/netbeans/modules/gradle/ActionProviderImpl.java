@@ -188,6 +188,7 @@ public class ActionProviderImpl implements ActionProvider {
         "# {0} - artifactId", "TXT_ApplyCodeChanges=Apply Code Changes ({0})",
         "# {0} - artifactId", "TXT_Profile=Profile ({0})",
         "# {0} - artifactId", "TXT_Test=Test ({0})",
+        "# {0} - artifactId", "TXT_Test_Parallel=Test In Parallel ({0})",
         "# {0} - artifactId", "TXT_Build=Build ({0})",
         "# {0} - artifactId", "TXT_Delete=Delete ({0})",
     })
@@ -215,7 +216,7 @@ public class ActionProviderImpl implements ActionProvider {
                 title = TXT_Test(prjLabel);
                 break;
             case ActionProvider.COMMAND_TEST_PARALLEL:
-                title = TXT_Test(prjLabel);
+                title = TXT_Test_Parallel(prjLabel);
                 break;
             case ActionProvider.COMMAND_RUN_SINGLE:
                 title = TXT_Run(dobjName);

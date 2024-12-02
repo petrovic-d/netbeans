@@ -25,10 +25,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.netbeans.api.extexecution.base.ExplicitProcessParameters;
+import org.netbeans.api.project.Project;
 import org.netbeans.modules.gradle.api.NbGradleProject;
 import org.netbeans.modules.gradle.spi.actions.ReplaceTokenProvider;
 import org.netbeans.spi.project.ActionProvider;
+import org.netbeans.spi.project.ContainedProjectFilter;
 import org.netbeans.spi.project.ProjectServiceProvider;
 import org.openide.util.Lookup;
 
@@ -69,18 +70,26 @@ public class ProjectsTokenProvider implements ReplaceTokenProvider {
     }
     
     private Map<String,String> getProjectsWithTaskReplacement(String taskName, Lookup context) {
-        ExplicitProcessParameters parameters = context.lookup(ExplicitProcessParameters.class);
-        List<String> projects = parameters.getProjects();
+        ContainedProjectFilter parameters = context.lookup(ContainedProjectFilter.class);
+        List<Project> projects = parameters.getProjectsToProcess();
         if (projects == null || projects.isEmpty()) {
             return Map.of(TASK_WITH_PROJECTS, taskName);
         }
         StringBuilder resultTask = new StringBuilder();
-        for (String project : projects) {
+        List<String> projectReplacements = createProjectsReplacement(projects);
+        for (String project : projectReplacements) {
             resultTask.append(project)
                     .append(":") //NOI18N
                     .append(taskName)
                     .append(" ");//NOI18N
         }
         return Map.of(TASK_WITH_PROJECTS, resultTask.toString().trim());
+    }
+    
+    private List<String> createProjectsReplacement(List<Project> projects) {
+        return projects
+                .stream()
+                .map(prj -> prj.getProjectDirectory().getName())
+                .toList();
     }
 }

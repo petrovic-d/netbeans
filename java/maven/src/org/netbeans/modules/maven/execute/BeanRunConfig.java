@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.PlexusContainerException;
 import org.netbeans.api.annotations.common.NonNull;
 import org.netbeans.api.annotations.common.NullAllowed;
 import org.netbeans.api.project.Project;
@@ -409,7 +408,7 @@ public class BeanRunConfig implements RunConfig {
     }
 
     @Override
-    public void setOptions(String key, String value) {
+    public void setOption(String key, String value) {
         if (options == null) {
             options = new LinkedHashMap<String,String>();
             if (parent != null) {

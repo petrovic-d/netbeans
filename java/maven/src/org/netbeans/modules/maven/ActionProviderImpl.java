@@ -434,6 +434,7 @@ public class ActionProviderImpl implements ActionProvider {
         "# {0} - artifactId", "TXT_ApplyCodeChanges=Apply Code Changes ({0})",
         "# {0} - artifactId", "TXT_Profile=Profile ({0})",
         "# {0} - artifactId", "TXT_Test=Test ({0})",
+        "# {0} - artifactId", "TXT_Test_Parallel=Test In Parallel ({0})",
         "# {0} - artifactId", "TXT_Build=Build ({0})",
         "# {0} - action name", "# {1} - project name", "TXT_CustomNamed={0} ({1})"
     })
@@ -460,7 +461,7 @@ public class ActionProviderImpl implements ActionProvider {
         } else if (ActionProvider.COMMAND_TEST.equals(action)) {
             title = TXT_Test(prjLabel);
         } else if (ActionProvider.COMMAND_TEST_PARALLEL.equals(action)) {
-            title = TXT_Test(prjLabel);
+            title = TXT_Test_Parallel(prjLabel);
         } else if (action.startsWith(ActionProvider.COMMAND_RUN_SINGLE)) {
             title = TXT_Run(dobjName);
         } else if (action.startsWith(ActionProvider.COMMAND_DEBUG_SINGLE) || ActionProvider.COMMAND_DEBUG_TEST_SINGLE.equals(action)) {

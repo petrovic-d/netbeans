@@ -224,7 +224,7 @@ public class DebuggerCheckerTest extends NbTestCase {
         }
 
         @Override
-        public void setOptions(String key, String value) {
+        public void setOption(String key, String value) {
             options.put(key, value);
         }
 

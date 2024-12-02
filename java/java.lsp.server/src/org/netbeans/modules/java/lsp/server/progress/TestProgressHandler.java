@@ -18,6 +18,7 @@
  */
 package org.netbeans.modules.java.lsp.server.progress;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -154,7 +155,14 @@ public final class TestProgressHandler implements TestResultDisplayHandler.Spi<M
     private static ModuleInfo getModuleInfo(TestSession session) {
         Project project = session.getProject();
         String moduleName = project != null ? ProjectUtils.getInformation(project).getDisplayName() : null;
-        String modulePath = project != null ? project.getProjectDirectory().getPath() : null;
+        String modulePath = getModuleTestPath(project);
         return new ModuleInfo(moduleName, modulePath);
+    }
+    
+    private static String getModuleTestPath(Project project) {
+        if (project == null) {
+            return null;
+        }
+        return Paths.get(project.getProjectDirectory().getPath(), "src", "test", "java").toString();
     }
 }

@@ -1785,7 +1785,7 @@ meth public abstract void setInternalProperty(java.lang.String,java.lang.Object)
  anno 1 org.netbeans.api.annotations.common.NonNull()
  anno 2 org.netbeans.api.annotations.common.NullAllowed()
 meth public abstract void setOffline(java.lang.Boolean)
-meth public abstract void setOptions(java.lang.String,java.lang.String)
+meth public abstract void setOption(java.lang.String,java.lang.String)
  anno 1 org.netbeans.api.annotations.common.NonNull()
  anno 2 org.netbeans.api.annotations.common.NullAllowed()
 meth public abstract void setPreExecution(org.netbeans.modules.maven.api.execute.RunConfig)
@@ -2083,7 +2083,7 @@ meth public void reassignMavenProjectFromParent()
 meth public void setActionContext(org.openide.util.Lookup)
 meth public void setActionName(java.lang.String)
 meth public void setFileObject(org.openide.filesystems.FileObject)
-meth public void setOptions(java.lang.String,java.lang.String)
+meth public void setOption(java.lang.String,java.lang.String)
 meth public void setPreExecution(org.netbeans.modules.maven.api.execute.RunConfig)
 supr java.lang.Object
 hfds actionContext,actionName,activate,executionDirectory,executionName,goals,interactive,internalProperties,mp,offline,options,parent,preexecution,project,projectDirectory,properties,reactor,recursive,selectedFO,showDebug,showError,taskName,updateSnapshots
@@ -2147,6 +2147,12 @@ CLSS public static org.netbeans.modules.maven.execute.MavenCommandLineExecutor$E
 cons public init()
 meth public org.openide.execution.ExecutorTask execute(org.netbeans.modules.maven.api.execute.RunConfig,org.openide.windows.InputOutput,org.netbeans.modules.maven.execute.AbstractMavenExecutor$TabContext)
 supr java.lang.Object
+
+CLSS public org.netbeans.modules.maven.execute.MavenCommandLineOptions
+cons public init()
+meth public static boolean optionRequiresValue(java.lang.String)
+supr java.lang.Object
+hfds OPTIONS_WITH_VALUES
 
 CLSS public abstract interface org.netbeans.modules.maven.execute.MavenExecutor
 intf java.lang.Runnable
@@ -2296,7 +2302,7 @@ meth public void addPackaging(java.lang.String)
 meth public void addProperty(java.lang.String,java.lang.String)
 meth public void removeActivatedProfile(java.lang.String)
 meth public void removeGoal(java.lang.String)
-meth public void removeOptions(java.lang.String)
+meth public void removeOption(java.lang.String)
 meth public void removePackaging(java.lang.String)
 meth public void setActionName(java.lang.String)
 meth public void setActivatedProfiles(java.util.List<java.lang.String>)

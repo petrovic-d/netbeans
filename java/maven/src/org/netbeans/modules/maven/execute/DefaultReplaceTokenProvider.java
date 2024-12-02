@@ -32,7 +32,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.netbeans.api.annotations.common.CheckForNull;
-import org.netbeans.api.extexecution.base.ExplicitProcessParameters;
 import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.java.queries.UnitTestForSourceQuery;
 import org.netbeans.api.java.source.ClasspathInfo;
@@ -49,6 +48,7 @@ import org.netbeans.modules.maven.configurations.M2ConfigProvider;
 import org.netbeans.modules.maven.spi.actions.ActionConvertor;
 import org.netbeans.modules.maven.spi.actions.ReplaceTokenProvider;
 import org.netbeans.spi.project.ActionProvider;
+import org.netbeans.spi.project.ContainedProjectFilter;
 import org.netbeans.spi.project.ProjectServiceProvider;
 import org.netbeans.spi.project.SingleMethod;
 import org.netbeans.spi.project.support.ant.EditableProperties;
@@ -103,7 +103,7 @@ public class DefaultReplaceTokenProvider implements ReplaceTokenProvider, Action
 
     @Override public Map<String, String> createReplacements(String actionName, Lookup lookup) {
         FileObject[] fos = extractFileObjectsfromLookup(lookup);
-        List<String> projects = extractProjectsFromLookup(lookup);
+        List<Project> projects = extractProjectsFromLookup(lookup);
         
         SourceGroup group = findGroup(ProjectUtils.getSources(project).getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA), fos);
         HashMap<String, String> replaceMap = new HashMap<String, String>();
@@ -235,7 +235,8 @@ public class DefaultReplaceTokenProvider implements ReplaceTokenProvider, Action
             replaceMap.put(CLASSNAME_EXT, classnameExt.toString());
         }
         if (projects != null && !projects.isEmpty()) {
-            replaceMap.put(PROJECTS, String.join(",", projects));
+            List<String> projectReplacements = createProjectsReplacement(projects);
+            replaceMap.put(PROJECTS, String.join(",", projectReplacements));
         }
 
         Collection<? extends SingleMethod> methods = lookup.lookupAll(SingleMethod.class);
@@ -255,11 +256,18 @@ public class DefaultReplaceTokenProvider implements ReplaceTokenProvider, Action
         return replaceMap;
     }
     
-    private List<String> extractProjectsFromLookup(Lookup lookup) {
-        ExplicitProcessParameters parameters = lookup.lookup(ExplicitProcessParameters.class);
-        return parameters == null ? null : parameters.getProjects();
+    private List<Project> extractProjectsFromLookup(Lookup lookup) {
+        ContainedProjectFilter prrojectFilter = lookup.lookup(ContainedProjectFilter.class);
+        return prrojectFilter == null ? null : prrojectFilter.getProjectsToProcess();
     }
-
+    
+    private List<String> createProjectsReplacement(List<Project> projects) {
+        return projects
+                .stream()
+                .map(prj -> prj.getProjectDirectory().getName())
+                .toList();
+    }
+    
     private void addSelectedFiles(boolean testRoots, FileObject[] candidates, HashSet<String> test) {
         NbMavenProjectImpl prj = project.getLookup().lookup(NbMavenProjectImpl.class);
         if (prj != null) {

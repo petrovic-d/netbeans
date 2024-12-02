@@ -85,10 +85,15 @@
         </packagings>
         <options>
             <threads>0.5C</threads>
+            <projects>${projects}</projects>
+            <also-make></also-make>
         </options>
         <goals>
             <goal>test</goal>
         </goals>
+        <properties>
+            <parallel>classes</parallel>
+        </properties>
     </action>
     <action>
         <actionName>test.single</actionName>

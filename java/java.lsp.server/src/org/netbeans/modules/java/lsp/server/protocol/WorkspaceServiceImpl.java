@@ -403,7 +403,7 @@ public final class WorkspaceServiceImpl implements WorkspaceService, LanguageCli
                         String url = Utils.toUri(fo);
                         Project owner = FileOwnerQuery.getOwner(fo);
                         String moduleName = owner != null ? ProjectUtils.getInformation(owner).getDisplayName(): null;
-                        String modulePath = owner != null ? owner.getProjectDirectory().getPath() : null;
+                        String modulePath = getModuleTestPath(owner);
                         Map<String, TestSuiteInfo> suite2infos = new LinkedHashMap<>();
                         for (TestMethodController.TestMethod testMethod : methods) {
                             TestSuiteInfo suite = suite2infos.computeIfAbsent(testMethod.getTestClassName(), name -> {
@@ -806,6 +806,13 @@ public final class WorkspaceServiceImpl implements WorkspaceService, LanguageCli
                 }
         }
         throw new UnsupportedOperationException("Command not supported: " + params.getCommand());
+    }
+    
+    private String getModuleTestPath(Project project) {
+        if (project == null) {
+            return null;
+        }
+        return Paths.get(project.getProjectDirectory().getPath(), "src", "test", "java").toString();
     }
     
     private class ProjectInfoWorker {

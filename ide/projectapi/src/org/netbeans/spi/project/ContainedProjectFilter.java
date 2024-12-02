@@ -16,35 +16,37 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.netbeans.modules.maven.execute;
+package org.netbeans.spi.project;
 
-import java.util.Set;
+import java.util.Collections;
+import java.util.List;
+import org.netbeans.api.project.Project;
 
 /**
  *
  * @author Dusan Petrovic
+ * 
+ * @since 1.90
  */
-public class MavenCommandLineOptions {
+public final class ContainedProjectFilter {
     
-    private static final Set<String> OPTIONS_WITH_VALUES = Set.of(
-            "activate-profiles",  
-            "builder",  
-            "color",  
-            "define",  
-            "encrypt-master-password",  
-            "encrypt-password",  
-            "file",  
-            "global-settings",  
-            "global-toolchains",  
-            "log-file",  
-            "projects",  
-            "resume-from",  
-            "settings",  
-            "threads",  
-            "toolchains"
-    );
+    private List<Project> projectsToProcess;
+
+    private ContainedProjectFilter(List<Project> projectsToProcess) {
+        this.projectsToProcess = projectsToProcess;
+    }
+
+    /**
+     * Static factory method to create an instance of ContainedProjectFilter.
+     *
+     * @param projectsToProcess the list of projects to include in the filter
+     * @return a new instance of ContainedProjectFilter
+     */
+    public static ContainedProjectFilter of(List<Project> projectsToProcess) {
+        return new ContainedProjectFilter(projectsToProcess);
+    }
     
-    public static boolean optionRequiresValue(String option) {
-        return OPTIONS_WITH_VALUES.contains(option);
+    public List<Project> getProjectsToProcess() {
+        return Collections.unmodifiableList(projectsToProcess);
     }
 }

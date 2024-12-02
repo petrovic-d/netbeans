@@ -311,8 +311,7 @@ export class NbTestAdapter {
     }
 
     getModulePath(suite: TestSuite): Uri {
-        const basePath = Uri.parse(suite.modulePath || "");
-        return Uri.joinPath(basePath, "src", "test", "java");
+        return Uri.parse(suite.modulePath || "");
     }
 
     getNameWithIcon(itemName: string, itemType: 'module' | 'class' | 'method'): string  {

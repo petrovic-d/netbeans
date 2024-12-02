@@ -291,11 +291,11 @@ public class NetbeansActionMapping implements java.io.Serializable {
     } //-- void removePackaging(String) 
 
     /**
-     * Method removeOptions.
+     * Method removeOption.
      * 
      * @param string
      */
-    public void removeOptions(String string)
+    public void removeOption(String string)
     {
         getOptions().remove( string );
     }
