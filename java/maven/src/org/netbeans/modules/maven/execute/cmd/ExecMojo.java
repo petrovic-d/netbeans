@@ -177,9 +177,9 @@ public class ExecMojo extends ExecutionEventObject {
                 try {
                     return ProjectManager.getDefault().findProject(fo);
                 } catch (IOException ex) {
-                    //Exceptions.printStackTrace(ex);
+                    Exceptions.printStackTrace(ex);
                 } catch (IllegalArgumentException ex) {
-                    //Exceptions.printStackTrace(ex);
+                    Exceptions.printStackTrace(ex);
                 }
             }
         }

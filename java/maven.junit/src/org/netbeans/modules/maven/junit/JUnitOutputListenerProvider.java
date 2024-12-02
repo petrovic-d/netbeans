@@ -635,6 +635,9 @@ public class JUnitOutputListenerProvider implements OutputProcessor {
             }
             outputDir = locateOutputDir(suffix);
         }
+        if (outputDir == null) {
+            LOG.log(Level.WARNING, "Output directory is not created");
+        }
         File report = outputDir != null ? new File(outputDir, "TEST-" + runningTestClass + suffix + ".xml") : null;
         TestSession session = outputDir != null ? outputDir2sessions.get(outputDir) : null;
         if (outputDir == null || report == null || session == null) {

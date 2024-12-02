@@ -232,8 +232,8 @@ public abstract class AbstractOutputHandler {
                 writer.println(visitor.getLine());
             }
         }
-        AtomicInteger count = id2count.getOrDefault(id, new AtomicInteger(1));
-        if (count.decrementAndGet() == 0) {
+        AtomicInteger count = id2count.remove(id);
+        if (count == null || count.decrementAndGet() == 0) {
             Set set = processors.get(id);
             if (set != null) {
                 //TODO a bulletproof way would be to keep a list of currently started
