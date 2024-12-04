@@ -62,7 +62,9 @@ export class NbTestAdapter {
 
     async run(request: TestRunRequest, cancellation: CancellationToken, testInParallel: boolean = false, projects?: string[]): Promise<void> {
         if (!this.currentRun) {
-            commands.executeCommand('workbench.debug.action.focusRepl');
+            if (!testInParallel) {
+                commands.executeCommand('workbench.debug.action.focusRepl');
+            }
             cancellation.onCancellationRequested(() => this.cancel());
             this.currentRun = this.testController.createTestRun(request);
             this.itemsToRun = new Set();
@@ -140,7 +142,6 @@ export class NbTestAdapter {
                     moduleName: testItem.parent?.id,
                     modulePath: testItem.parent?.uri?.path,
                     state,
-                    
                 });
             })
         }
