@@ -48,7 +48,7 @@ import org.netbeans.modules.maven.configurations.M2ConfigProvider;
 import org.netbeans.modules.maven.spi.actions.ActionConvertor;
 import org.netbeans.modules.maven.spi.actions.ReplaceTokenProvider;
 import org.netbeans.spi.project.ActionProvider;
-import org.netbeans.spi.project.ContainedProjectFilter;
+import org.netbeans.api.project.ContainedProjectFilter;
 import org.netbeans.spi.project.ProjectServiceProvider;
 import org.netbeans.spi.project.SingleMethod;
 import org.netbeans.spi.project.support.ant.EditableProperties;

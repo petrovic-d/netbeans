@@ -22,7 +22,7 @@ package org.netbeans.modules.java.lsp.server.progress;
  *
  * @author dusanpetrovic
  */
-public class ModuleInfo {
+public final class ModuleInfo {
     
     private final String moduleName;
     private final String modulePath;

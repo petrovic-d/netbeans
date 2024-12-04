@@ -150,7 +150,7 @@ public final class TestProgressHandler implements TestResultDisplayHandler.Spi<M
         }
     }
 
-    private static Pattern PATTERN = Pattern.compile("Gradle Test Run :(.*):test");
+    private static final Pattern PATTERN = Pattern.compile("Gradle Test Run :(.*):test"); // NOI18N
 
     private static ModuleInfo getModuleInfo(TestSession session) {
         Project project = session.getProject();

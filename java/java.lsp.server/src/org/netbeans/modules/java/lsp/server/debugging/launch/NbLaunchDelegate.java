@@ -76,7 +76,7 @@ import org.netbeans.modules.nativeimage.api.debug.NIDebugger;
 import org.netbeans.modules.nativeimage.api.debug.StartDebugParameters;
 import org.netbeans.spi.project.ActionProgress;
 import org.netbeans.spi.project.ActionProvider;
-import org.netbeans.spi.project.ContainedProjectFilter;
+import org.netbeans.api.project.ContainedProjectFilter;
 import org.netbeans.spi.project.ProjectConfiguration;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
 import org.netbeans.spi.project.SingleMethod;

@@ -29,7 +29,7 @@ import org.netbeans.api.project.Project;
 import org.netbeans.modules.gradle.api.NbGradleProject;
 import org.netbeans.modules.gradle.spi.actions.ReplaceTokenProvider;
 import org.netbeans.spi.project.ActionProvider;
-import org.netbeans.spi.project.ContainedProjectFilter;
+import org.netbeans.api.project.ContainedProjectFilter;
 import org.netbeans.spi.project.ProjectServiceProvider;
 import org.openide.util.Lookup;
 

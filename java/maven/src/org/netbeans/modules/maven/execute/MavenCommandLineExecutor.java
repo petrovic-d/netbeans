@@ -459,7 +459,7 @@ public class MavenCommandLineExecutor extends AbstractMavenExecutor {
             String key = entry.getKey();
             String value = quote2apos(entry.getValue());
             if (MavenCommandLineOptions.optionRequiresValue(key) && (value.isEmpty() || value.equals("${" + key + "}"))) { //NOI18N
-                DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(Bundle.MSG_MissingValue(key), NotifyDescriptor.WARNING_MESSAGE));
+                DialogDisplayer.getDefault().notifyLater(new NotifyDescriptor.Message(Bundle.MSG_MissingValue(key), NotifyDescriptor.WARNING_MESSAGE));
                 continue;
             }
             toRet.add("--" + key);

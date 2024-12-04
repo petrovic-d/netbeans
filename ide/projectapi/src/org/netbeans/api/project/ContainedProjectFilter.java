@@ -16,14 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.netbeans.spi.project;
+package org.netbeans.api.project;
 
 import java.util.Collections;
 import java.util.List;
-import org.netbeans.api.project.Project;
 
 /**
- *
+ * Provides list of projects the project action should apply to
+ * 
+ * <p>
+ * An action that processes multiple projects might use <code>ContainedProjectFilter</code>
+ * to operate only on a specific subset of projects.
+ * The use of <code>ContainedProjectFilter</code> is optional and determined
+ * by the requirements of individual actions.
+ * Actions employing this class must document their specific filtering logic
+ * and behavior.
+ * </p>
+ * 
  * @author Dusan Petrovic
  * 
  * @since 1.90

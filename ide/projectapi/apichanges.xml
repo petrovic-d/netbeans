@@ -83,17 +83,23 @@ is the proper place.
     <!-- ACTUAL CHANGES BEGIN HERE: -->
 
     <changes>
-        <change id="contained-project-context">
+        <change id="run-test-in-parallel-action">
             <api name="general"/>
-            <summary>Added <code>ContainedProjectFilter</code> that can pass list of projects the project action should apply to</summary>
+            <summary>Added action for running tests in parallel</summary>
             <version major="1" minor="90"/>
             <date day="2" month="12" year="2024"/>
             <author login="petrovic-d"/>
             <compatibility addition="yes"/>
             <description>
-                ContainedProjectFilter can be used to pass list of projects the project action should apply to.
+                <p>
+                    <code><a href="@TOP@/org/netbeans/spi/project/ActionProvider.html">ActionProvider.COMMAND_TEST_PARALLEL</a></code> was introduced in order to
+                    allow running tests in parallel.
+                    <code><a href="@TOP@/org/netbeans/api/project/ContainedProjectFilter.html">ContainedProjectFilter</a></code> was added and
+                    it can be used to pass list of projects the project action should apply to.
+                </p>
             </description>
-            <class package="org.netbeans.spi.project" name="ContainedProjectFilter"/>
+            <class package="org.netbeans.api.project" name="ContainedProjectFilter"/>
+            <class package="org.netbeans.spi.project" name="ActionProvider"/>
         </change>
         <change id="project-action-context">
             <api name="general"/>
