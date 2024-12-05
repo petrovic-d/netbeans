@@ -97,7 +97,7 @@ export class NbTestAdapter {
             } 
             // TBD - message
             else {
-                this.itemsToRun.forEach(item => this.set(item, 'failed', new TestMessage('Build failure')));    
+                this.itemsToRun.forEach(item => this.set(item, 'failed', new TestMessage('Build failure'), false, true));    
             }
             this.itemsToRun = undefined;
             this.currentRun.end();
@@ -105,16 +105,16 @@ export class NbTestAdapter {
         }
     }
 
-    set(item: TestItem, state: SuiteState, message?: TestMessage | readonly TestMessage[], noPassDown? : boolean): void {
+    set(item: TestItem, state: SuiteState, message?: TestMessage | readonly TestMessage[], noPassDown? : boolean, dispatchBuildFailEvent?: boolean): void {
         if (this.currentRun) {
             switch (state) {
                 case 'enqueued':
-                    this.dispatchTestSuiteEvent(state, item);
+                    this.dispatchTestEvent(state, item);
                     this.itemsToRun?.add(item);
                     this.currentRun.enqueued(item);
                     break;
                 case 'skipped':
-                    this.dispatchTestSuiteEvent(state, item);
+                    this.dispatchTestEvent(state, item);
                 case 'started':
                 case 'passed':
                     this.itemsToRun?.delete(item);
@@ -122,29 +122,61 @@ export class NbTestAdapter {
                     break;
                 case 'failed':
                 case 'errored':
+                    if (dispatchBuildFailEvent) {
+                        this.dispatchTestEvent(state, item);
+                    }
                     this.itemsToRun?.delete(item);
                     this.currentRun[state](item, message || new TestMessage(""));
                     break;
             }
             this.suiteStates.set(item, state);
             if (!noPassDown) {
-                item.children.forEach(child => this.set(child, state, message, noPassDown));
+                item.children.forEach(child => this.set(child, state, message, noPassDown, dispatchBuildFailEvent));
             }
         }
     }
     
-    dispatchTestSuiteEvent(state: SuiteState, testItem: TestItem): void {
+    dispatchTestEvent(state: SuiteState, testItem: TestItem): void {
         if (testItem.parent && testItem.children.size > 0) {
-            const testProgressListeners = listeners.get(TEST_PROGRESS_EVENT);
-            testProgressListeners?.forEach(listener => {
-                commands.executeCommand(listener, {
-                    name: testItem.id,
-                    moduleName: testItem.parent?.id,
-                    modulePath: testItem.parent?.uri?.path,
+            this.dispatchEvent({
+                name: testItem.id,
+                moduleName: testItem.parent?.id,
+                modulePath: testItem.parent?.uri?.path,
+                state,
+            });
+        } else if (testItem.children.size === 0) {
+            const testSuite = testItem.parent;
+            if (testSuite) {
+                const testSuiteEvent: any = {
+                    name: testSuite.id,
+                    moduleName: testSuite.parent?.id,
+                    modulePath: testSuite.parent?.uri?.path,
                     state,
-                });
-            })
+                    tests: []
+                }
+                testSuite?.children.forEach(suite => {
+                    if (suite.id === testItem.id) {
+                        const idx = suite.id.indexOf(':');
+                        if (idx >= 0) {
+                            const name = suite.id.slice(idx + 1);
+                            testSuiteEvent.tests?.push({
+                                id: suite.id,
+                                name,
+                                state
+                            })
+                        }
+                    }
+                })
+                this.dispatchEvent(testSuiteEvent);
+            }
         }
+    }
+
+    dispatchEvent(event: any): void {
+        const testProgressListeners = listeners.get(TEST_PROGRESS_EVENT);
+        testProgressListeners?.forEach(listener => {
+            commands.executeCommand(listener, event);
+        })
     }
 
     cancel(): void {
