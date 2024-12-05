@@ -20,6 +20,7 @@ package org.netbeans.api.project;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Provides list of projects the project action should apply to
@@ -39,7 +40,7 @@ import java.util.List;
  */
 public final class ContainedProjectFilter {
     
-    private List<Project> projectsToProcess;
+    private final List<Project> projectsToProcess;
 
     private ContainedProjectFilter(List<Project> projectsToProcess) {
         this.projectsToProcess = projectsToProcess;
@@ -49,10 +50,13 @@ public final class ContainedProjectFilter {
      * Static factory method to create an instance of ContainedProjectFilter.
      *
      * @param projectsToProcess the list of projects to include in the filter
-     * @return a new instance of ContainedProjectFilter
+     * @return an Optional containing ContainedProjectFilter, or Optional.empty() if the list is null or empty
      */
-    public static ContainedProjectFilter of(List<Project> projectsToProcess) {
-        return new ContainedProjectFilter(projectsToProcess);
+    public static Optional<ContainedProjectFilter> of(List<Project> projectsToProcess) {
+         if (projectsToProcess == null || projectsToProcess.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(new ContainedProjectFilter(projectsToProcess));
     }
     
     public List<Project> getProjectsToProcess() {

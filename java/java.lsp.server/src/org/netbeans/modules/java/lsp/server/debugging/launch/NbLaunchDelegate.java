@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -658,17 +659,10 @@ public abstract class NbLaunchDelegate {
     
     static ContainedProjectFilter getProjectFilter(Project prj, Map<String, Object> launchArguments) {
         List<String> projectsArg = argsToStringList(launchArguments.get("projects"));
-        if (projectsArg.isEmpty()) {
-            return ContainedProjectFilter.of(List.of());
-        }
-        List<Project> projects = new ArrayList<>();
-        for (Project project: ProjectUtils.getContainedProjects(prj, false)) {
-            String projectName = project.getProjectDirectory().getName();
-            if (projectsArg.contains(projectName)) {
-                projects.add(project);
-            }
-        }
-        return ContainedProjectFilter.of(projects);
+        List<Project> projects = ProjectUtils.getContainedProjects(prj, false).stream()
+            .filter(project -> projectsArg.contains(project.getProjectDirectory().getName()))
+            .toList();
+        return ContainedProjectFilter.of(projects).orElse(null);
     }
 
     static Collection<ActionProvider> findActionProviders(Project prj) {

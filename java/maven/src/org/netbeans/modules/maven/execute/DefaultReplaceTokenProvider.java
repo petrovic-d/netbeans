@@ -257,8 +257,8 @@ public class DefaultReplaceTokenProvider implements ReplaceTokenProvider, Action
     }
     
     private List<Project> extractProjectsFromLookup(Lookup lookup) {
-        ContainedProjectFilter prrojectFilter = lookup.lookup(ContainedProjectFilter.class);
-        return prrojectFilter == null ? null : prrojectFilter.getProjectsToProcess();
+        ContainedProjectFilter projectFilter = lookup.lookup(ContainedProjectFilter.class);
+        return projectFilter == null ? null : projectFilter.getProjectsToProcess();
     }
     
     private List<String> createProjectsReplacement(List<Project> projects) {
