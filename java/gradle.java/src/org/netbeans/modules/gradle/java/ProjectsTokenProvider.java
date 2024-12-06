@@ -69,9 +69,9 @@ public class ProjectsTokenProvider implements ReplaceTokenProvider {
         };
     }
     
-    private Map<String,String> getProjectsWithTaskReplacement(String taskName, Lookup context) {
+    private Map<String,String> getProjectsWithTaskReplacement(String taskName, Lookup context) {     
         ContainedProjectFilter parameters = context.lookup(ContainedProjectFilter.class);
-        List<Project> projects = parameters.getProjectsToProcess();
+        List<Project> projects = parameters == null ? null : parameters.getProjectsToProcess();
         if (projects == null || projects.isEmpty()) {
             return Map.of(TASK_WITH_PROJECTS, taskName);
         }

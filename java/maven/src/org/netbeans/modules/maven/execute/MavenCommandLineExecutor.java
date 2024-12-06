@@ -458,9 +458,13 @@ public class MavenCommandLineExecutor extends AbstractMavenExecutor {
         for (Map.Entry<? extends String, ? extends String> entry : config.getOptions().entrySet()) {
             String key = entry.getKey();
             String value = quote2apos(entry.getValue());
-            if (MavenCommandLineOptions.optionRequiresValue(key) && (value.isEmpty() || value.equals("${" + key + "}"))) { //NOI18N
-                DialogDisplayer.getDefault().notifyLater(new NotifyDescriptor.Message(Bundle.MSG_MissingValue(key), NotifyDescriptor.WARNING_MESSAGE));
-                continue;
+            if (MavenCommandLineOptions.optionRequiresValue(key)) {
+                if (value.isEmpty()) {
+                    DialogDisplayer.getDefault().notifyLater(new NotifyDescriptor.Message(Bundle.MSG_MissingValue(key), NotifyDescriptor.WARNING_MESSAGE));
+                    continue;
+                } else if (value.equals("${" + key + "}")) { //NOI18N
+                    continue;
+                }
             }
             toRet.add("--" + key);
             if (value != null && !value.isBlank()) {
