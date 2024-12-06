@@ -931,10 +931,12 @@ export function activate(context: ExtensionContext): VSNetBeansAPI {
         }
     };
 
+    context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.run.test.parallel', async (projects?) => {        
+        testAdapter?.runTestsWithParallelParallel(projects);
+    }));
+
     context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.run.test.parallel.createProfile', async (projects?) => {        
-        if (projects) {
-            testAdapter?.registerRunInParallelProfile(projects);
-        }
+        testAdapter?.registerRunInParallelProfile(projects);
     }));
 
     context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.run.test', async (uri, methodName?, launchConfiguration?, testInParallel?, projects?) => {

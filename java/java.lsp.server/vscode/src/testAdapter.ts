@@ -18,7 +18,7 @@
  */
 'use strict';
 
-import { commands, debug, tests, workspace, CancellationToken, TestController, TestItem, TestRunProfileKind, TestRunRequest, Uri, TestRun, TestMessage, Location, Position, MarkdownString, TestRunProfile } from "vscode";
+import { commands, debug, tests, workspace, CancellationToken, TestController, TestItem, TestRunProfileKind, TestRunRequest, Uri, TestRun, TestMessage, Location, Position, MarkdownString, TestRunProfile, CancellationTokenSource } from "vscode";
 import * as path from 'path';
 import { asRange, TestCase, TestSuite } from "./protocol";
 import { COMMAND_PREFIX, listeners, TEST_PROGRESS_EVENT } from "./extension";
@@ -33,6 +33,7 @@ export class NbTestAdapter {
     private itemsToRun: Set<TestItem> | undefined;
     private started: boolean = false;
     private suiteStates: Map<TestItem, SuiteState>;
+    private parallelRunProfile: TestRunProfile | undefined;
 
     constructor() {
         this.testController = tests.createTestController('apacheNetBeansController', 'Apache NetBeans');
@@ -46,7 +47,15 @@ export class NbTestAdapter {
 
     public registerRunInParallelProfile(projects: string[]) {
         const runHandler = (request: TestRunRequest, cancellation: CancellationToken) => this.run(request, cancellation, true, projects);
-        this.testController.createRunProfile("Run Tests In Parallel", TestRunProfileKind.Run, runHandler, true);
+        this.parallelRunProfile = this.testController.createRunProfile("Run Tests In Parallel", TestRunProfileKind.Run, runHandler, true);
+        this.testController.items.replace([]);
+        this.load();
+    }
+
+    public runTestsWithParallelParallel(projects?: string[]) {
+        if (this.parallelRunProfile) {
+            this.run(new TestRunRequest(undefined, undefined, this.parallelRunProfile), new CancellationTokenSource().token, true, projects);
+        }
     }
 
     async load(): Promise<void> {
@@ -198,7 +207,7 @@ export class NbTestAdapter {
     }
 
     testProgress(suite: TestSuite): void {
-        const currentModule = this.testController.items.get(this.getModuleName(suite));
+        const currentModule = this.testController.items.get(suite.moduleName || "");
         const currentSuite = currentModule?.children.get(suite.name);
 
         switch (suite.state) {
@@ -287,10 +296,11 @@ export class NbTestAdapter {
     }
 
     updateTests(suite: TestSuite, testExecution?: boolean): void {
-        const moduleName = this.getModuleName(suite);
+        const moduleName = suite.moduleName || "";
         let currentModule = this.testController.items.get(moduleName);
         if (!currentModule) {
-            currentModule = this.testController.createTestItem(moduleName, this.getNameWithIcon(moduleName, 'module'), this.getModulePath(suite));
+            const parsedName = this.parseModuleName(moduleName);
+            currentModule = this.testController.createTestItem(moduleName, this.getNameWithIcon(parsedName, 'module'), this.getModulePath(suite));
             this.testController.items.add(currentModule);
         }
 
@@ -360,11 +370,19 @@ export class NbTestAdapter {
             currentModule.children.replace(suiteChildren);
         }
     }
-
-    getModuleName(suite: TestSuite): string {
-        return suite.moduleName?.replace(":", "-") || "";
+    
+    parseModuleName(moduleName: string): string {
+        if (!this.parallelRunProfile) {
+            return moduleName.replace(":", "-");
+        }
+        const index = moduleName.indexOf(":");
+        if (index !== -1) {
+            return moduleName.slice(index + 1);
+        }
+        const parts = moduleName.split("-");
+        return parts[parts.length - 1];
     }
-
+    
     getModulePath(suite: TestSuite): Uri {
         return Uri.parse(suite.modulePath || "");
     }
