@@ -18,7 +18,6 @@
  */
 package org.netbeans.modules.java.lsp.server.progress;
 
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,8 +28,10 @@ import java.util.regex.Pattern;
 import org.eclipse.lsp4j.debug.OutputEventArguments;
 import org.eclipse.lsp4j.debug.services.IDebugProtocolClient;
 import org.netbeans.api.extexecution.print.LineConvertors;
+import org.netbeans.api.java.project.JavaProjectConstants;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
+import org.netbeans.api.project.SourceGroup;
 import org.netbeans.modules.gsf.testrunner.api.Report;
 import org.netbeans.modules.gsf.testrunner.api.Status;
 import org.netbeans.modules.gsf.testrunner.api.TestSession;
@@ -159,10 +160,17 @@ public final class TestProgressHandler implements TestResultDisplayHandler.Spi<M
         return new ModuleInfo(moduleName, modulePath);
     }
     
-    private static String getModuleTestPath(Project project) {
+    private static String getModuleTestPath(Project project) {        
         if (project == null) {
             return null;
         }
-        return Paths.get(project.getProjectDirectory().getPath(), "src", "test", "java").toString();
+        SourceGroup[] sourceGroups = ProjectUtils.getSources(project).getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
+        for (SourceGroup sourceGroup : sourceGroups) {
+            String testSourcePath = sourceGroup.getRootFolder().getPath();
+            if (testSourcePath.endsWith("/src/test/java")){
+                return sourceGroup.getRootFolder().getPath();
+            }
+        }
+        return null;
     }
 }

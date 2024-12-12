@@ -808,11 +808,18 @@ public final class WorkspaceServiceImpl implements WorkspaceService, LanguageCli
         throw new UnsupportedOperationException("Command not supported: " + params.getCommand());
     }
     
-    private String getModuleTestPath(Project project) {
+    private static String getModuleTestPath(Project project) {        
         if (project == null) {
             return null;
         }
-        return Paths.get(project.getProjectDirectory().getPath(), "src", "test", "java").toString();
+        SourceGroup[] sourceGroups = ProjectUtils.getSources(project).getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
+        for (SourceGroup sourceGroup : sourceGroups) {
+            String testSourcePath = sourceGroup.getRootFolder().getPath();
+            if (testSourcePath.endsWith("/src/test/java")) { // NOI18N
+                return sourceGroup.getRootFolder().getPath();
+            }
+        }
+        return null;
     }
     
     private class ProjectInfoWorker {
