@@ -207,7 +207,7 @@ export class NbTestAdapter {
     }
 
     testProgress(suite: TestSuite): void {
-        const currentModule = this.testController.items.get(suite.moduleName || "");
+        const currentModule = this.testController.items.get(this.getModuleItemId(suite.moduleName));
         const currentSuite = currentModule?.children.get(suite.name);
 
         switch (suite.state) {
@@ -296,7 +296,7 @@ export class NbTestAdapter {
     }
 
     updateTests(suite: TestSuite, testExecution?: boolean): void {
-        const moduleName = suite.moduleName || "";
+        const moduleName = this.getModuleItemId(suite.moduleName);
         let currentModule = this.testController.items.get(moduleName);
         if (!currentModule) {
             const parsedName = this.parseModuleName(moduleName);
@@ -369,6 +369,10 @@ export class NbTestAdapter {
             currentSuite.children.replace(children);
             currentModule.children.replace(suiteChildren);
         }
+    }
+
+    getModuleItemId(moduleName?: string): string {
+        return moduleName?.replace(":", "-") || "";
     }
     
     parseModuleName(moduleName: string): string {
