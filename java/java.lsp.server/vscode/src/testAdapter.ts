@@ -83,9 +83,21 @@ export class NbTestAdapter {
                 for (let item of include) {
                     if (item.uri) {
                         this.set(item, 'enqueued');
+                        item.parent?.children.forEach(child => {
+                            if (child.id?.includes(item.id)) {
+                                this.set(child, 'enqueued');
+                            }
+                        })
                         const idx = item.id.indexOf(':');
+                        const nestedClassIdx = item.id.indexOf('$');
+                        let nestedClass: string | undefined;
+                        if (nestedClassIdx > 0) {
+                            nestedClass = idx < 0 
+                                ? item.id.slice(nestedClassIdx + 1) 
+                                : item.id.substring(nestedClassIdx + 1, idx);
+                        }
                         if (!cancellation.isCancellationRequested) {
-                            await commands.executeCommand(request.profile?.kind === TestRunProfileKind.Debug ? COMMAND_PREFIX + '.debug.single' : COMMAND_PREFIX + '.run.single', item.uri.toString(), idx < 0 ? undefined : item.id.slice(idx + 1));
+                            await commands.executeCommand(request.profile?.kind === TestRunProfileKind.Debug ? COMMAND_PREFIX + '.debug.single' : COMMAND_PREFIX + '.run.single', item.uri.toString(), idx < 0 ? undefined : item.id.slice(idx + 1), nestedClass);
                         }
                     }
                 }
@@ -94,7 +106,7 @@ export class NbTestAdapter {
                 for (let workspaceFolder of workspace.workspaceFolders || []) {
                     if (!cancellation.isCancellationRequested) {
                         if (testInParallel) {
-                            await commands.executeCommand(COMMAND_PREFIX + '.run.test', workspaceFolder.uri.toString(), undefined, undefined, true, projects);
+                            await commands.executeCommand(COMMAND_PREFIX + '.run.test', workspaceFolder.uri.toString(), undefined, undefined, undefined, true, projects);
                         } else {
                             await commands.executeCommand(request.profile?.kind === TestRunProfileKind.Debug ? COMMAND_PREFIX + '.debug.test': COMMAND_PREFIX + '.run.test', workspaceFolder.uri.toString());
                         }

@@ -19,10 +19,18 @@
 package org.netbeans.spi.project;
 
 import java.util.Objects;
+import org.openide.filesystems.FileObject;
 
 /**
- * Structure representing an identification of a single method/function
- * in a file.
+ * Structure representing an identification of a nested class in a file.
+ * 
+ * <p>
+ * <code>NestedClass</code> can be used to represent nested classes within parent class
+ * Example:
+ * If we have following structure: ParentClass (parent-of) ChildClass1 (parent-of) ChildClass2,
+ * for ChildClass1 className field would contain "ChildClass1", and 
+ * for ChildClass2 className field would contain "ChildClass1$ChildClass2"
+ * </p>
  * 
  * @author Dusan Petrovic
  * 
@@ -30,27 +38,43 @@ import java.util.Objects;
  */
 public final class NestedClass {
  
+    private FileObject file;
     private String className;
 
     /**
      * Creates a new instance holding the specified identification
-     * of a nested class in a file.
+     * of a nested class.
      *
      * @param className name of a class inside the file
+     * @param file file to be kept in the object
      * @exception  java.lang.IllegalArgumentException
      *             if the file or class name is {@code null}
      * @since 1.90
      */
-    public NestedClass(String className) {
+    public NestedClass(String className, FileObject file) {
         super();
         if (className == null) {
             throw new IllegalArgumentException("className is <null>");
         }
+        if (file == null) {
+            throw new IllegalArgumentException("file is <null>");
+        }
         this.className = className;
+        this.file = file;
     }
     
     /**
-     * Returns name of a nested class.
+     * Returns the file identification.
+     *
+     * @return file held by this object
+     * @since 1.90
+     */
+    public FileObject getFile() {
+        return file;
+    }
+    
+    /**
+     * Returns name of a nested class within a file.
      *
      * @return class name held by this object
      * @since 1.90
@@ -63,6 +87,7 @@ public final class NestedClass {
     public int hashCode() {
         int hash = 3;
         hash = 41 * hash + Objects.hashCode(this.className);
+        hash = 41 * hash + Objects.hashCode(this.file);
         return hash;
     }
 
@@ -75,6 +100,6 @@ public final class NestedClass {
             return true;
         }
         final NestedClass other = (NestedClass) obj;
-        return other.className.equals(className);
+        return other.file.equals(file) && other.className.equals(className);
     }
 }

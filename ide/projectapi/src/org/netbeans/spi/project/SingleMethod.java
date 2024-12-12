@@ -31,6 +31,7 @@ public final class SingleMethod {
 
     private FileObject file;
     private String methodName;
+    private NestedClass nestedClass;
 
     /**
      * Creates a new instance holding the specified identification
@@ -52,6 +53,37 @@ public final class SingleMethod {
         }
         this.file = file;
         this.methodName = methodName;
+    }
+    
+    /**
+     * Creates a new instance holding the specified identification
+     * of a method/function in nested class in a file.
+     *
+     * @param file file to be kept in the object
+     * @param methodName name of a method inside the file     
+     * @param nestedClass nested class containing the method
+     * 
+     * @exception  java.lang.IllegalArgumentException
+     *             if the nested class name is {@code null}
+     * @since 1.90
+     */
+    public SingleMethod(FileObject file, String methodName, NestedClass nestedClass) {
+        this(file, methodName);
+        if (nestedClass == null) {
+            throw new IllegalArgumentException("nestedClass is <null>");
+        }
+        this.nestedClass = nestedClass;
+    }
+    
+    
+    /**
+     * Returns the nested class containing the method.
+     *
+     * @return nested class containing the method
+     * @since 1.90
+     */
+    public NestedClass getNestedClass() {
+        return nestedClass;
     }
 
     /**
@@ -94,7 +126,7 @@ public final class SingleMethod {
             return false;
         }
         SingleMethod other = (SingleMethod) obj;
-        return other.file.equals(file) && other.methodName.equals(methodName);
+        return other.file.equals(file) && other.methodName.equals(methodName) && other.nestedClass.equals(nestedClass);
     }
 
     @Override
@@ -102,6 +134,7 @@ public final class SingleMethod {
         int hash = 7;
         hash = 29 * hash + this.file.hashCode();
         hash = 29 * hash + this.methodName.hashCode();
+        hash = 29 * hash + this.nestedClass.hashCode();
         return hash;
     }
 }

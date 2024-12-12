@@ -49,6 +49,7 @@ import org.netbeans.modules.maven.spi.actions.ActionConvertor;
 import org.netbeans.modules.maven.spi.actions.ReplaceTokenProvider;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.api.project.ContainedProjectFilter;
+import org.netbeans.spi.project.NestedClass;
 import org.netbeans.spi.project.ProjectServiceProvider;
 import org.netbeans.spi.project.SingleMethod;
 import org.netbeans.spi.project.support.ant.EditableProperties;
@@ -102,6 +103,7 @@ public class DefaultReplaceTokenProvider implements ReplaceTokenProvider, Action
     }
 
     @Override public Map<String, String> createReplacements(String actionName, Lookup lookup) {
+        NestedClass nestedClass = lookup.lookup(NestedClass.class);
         FileObject[] fos = extractFileObjectsfromLookup(lookup);
         List<Project> projects = extractProjectsFromLookup(lookup);
         
@@ -167,7 +169,7 @@ public class DefaultReplaceTokenProvider implements ReplaceTokenProvider, Action
                     classname.append(pkg); // ?
                     classnameExt.append(pkg); // ??
                 } else { // XXX do we need to limit to text/x-java? What about files of other type?
-                    String cn = SourceUtils.classNameFor(ClasspathInfo.create(file), rel);
+                    String cn = SourceUtils.classNameFor(ClasspathInfo.create(file), rel, nestedClass);
                     int idx = cn.lastIndexOf('.');
                     String n = idx < 0 ? cn : cn.substring(idx + 1);
                     if (uniqueClassNames.add(cn)) {

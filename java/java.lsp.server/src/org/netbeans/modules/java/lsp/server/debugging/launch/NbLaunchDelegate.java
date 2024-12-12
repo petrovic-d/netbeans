@@ -78,6 +78,7 @@ import org.netbeans.modules.nativeimage.api.debug.StartDebugParameters;
 import org.netbeans.spi.project.ActionProgress;
 import org.netbeans.spi.project.ActionProvider;
 import org.netbeans.api.project.ContainedProjectFilter;
+import org.netbeans.spi.project.NestedClass;
 import org.netbeans.spi.project.ProjectConfiguration;
 import org.netbeans.spi.project.ProjectConfigurationProvider;
 import org.netbeans.spi.project.SingleMethod;
@@ -126,14 +127,22 @@ public abstract class NbLaunchDelegate {
     }
 
     public final CompletableFuture<Void> nbLaunch(FileObject toRun, boolean preferProjActions, @NullAllowed File nativeImageFile,
-                                                  @NullAllowed String method, Map<String, Object> launchArguments, DebugAdapterContext context,
+                                                  @NullAllowed String method, @NullAllowed String nestedClassName, Map<String, Object> launchArguments, DebugAdapterContext context,
                                                   boolean debug, boolean testRun, Consumer<NbProcessConsole.ConsoleMessage> consoleMessages,
                                                   boolean testInParallel) {
         CompletableFuture<Void> launchFuture = new CompletableFuture<>();
         NbProcessConsole ioContext = new NbProcessConsole(consoleMessages);
+        NestedClass nestedClass;
+        if (nestedClassName != null) {
+           nestedClass = new NestedClass(nestedClassName, toRun);
+        } else {
+            nestedClass = null;
+        }
         SingleMethod singleMethod;
         if (method != null) {
-            singleMethod = new SingleMethod(toRun, method);
+            singleMethod = nestedClass != null ?
+                    new SingleMethod(toRun, method, nestedClass)
+                    : new SingleMethod(toRun, method);
         } else {
             singleMethod = null;
         }
@@ -187,7 +196,7 @@ public abstract class NbLaunchDelegate {
                 }
             }
             W writer = new W();
-            CompletableFuture<Pair<ActionProvider, String>> commandFuture = findTargetWithPossibleRebuild(prj, preferProjActions, toRun, singleMethod, debug, testRun, ioContext, testInParallel, projectFilter);
+            CompletableFuture<Pair<ActionProvider, String>> commandFuture = findTargetWithPossibleRebuild(prj, preferProjActions, toRun, singleMethod, nestedClass, debug, testRun, ioContext, testInParallel, projectFilter);
             commandFuture.thenAccept((providerAndCommand) -> {
                 ExplicitProcessParameters params = createExplicitProcessParameters(launchArguments);
                 OperationContext ctx = OperationContext.find(Lookup.getDefault());
@@ -235,7 +244,7 @@ public abstract class NbLaunchDelegate {
                 }
 
                 Lookup lookup = new ProxyLookup(
-                    createTargetLookup(prj, singleMethod, toRun, projectFilter),
+                    createTargetLookup(prj, singleMethod, nestedClass, toRun, projectFilter),
                     Lookups.fixed(runContext.toArray(new Object[runContext.size()]))
                 );
                 // the execution Lookup is fully populated now. If the Project supports Configurations,
@@ -498,8 +507,8 @@ public abstract class NbLaunchDelegate {
         }
     }
 
-    private static CompletableFuture<Pair<ActionProvider, String>> findTargetWithPossibleRebuild(Project proj, boolean preferProjActions, FileObject toRun, SingleMethod singleMethod, boolean debug, boolean testRun, NbProcessConsole ioContext, boolean testInParallel, ContainedProjectFilter projectFilter) throws IllegalArgumentException {
-        Pair<ActionProvider, String> providerAndCommand = findTarget(proj, preferProjActions, toRun, singleMethod, debug, testRun, testInParallel, projectFilter);
+    private static CompletableFuture<Pair<ActionProvider, String>> findTargetWithPossibleRebuild(Project proj, boolean preferProjActions, FileObject toRun, SingleMethod singleMethod, NestedClass nestedClass, boolean debug, boolean testRun, NbProcessConsole ioContext, boolean testInParallel, ContainedProjectFilter projectFilter) throws IllegalArgumentException {
+        Pair<ActionProvider, String> providerAndCommand = findTarget(proj, preferProjActions, toRun, singleMethod, nestedClass, debug, testRun, testInParallel, projectFilter);
         if (providerAndCommand != null) {
             return CompletableFuture.completedFuture(providerAndCommand);
         }
@@ -515,7 +524,7 @@ public abstract class NbLaunchDelegate {
             @Override
             public void finished(boolean success) {
                 if (success) {
-                    Pair<ActionProvider, String> providerAndCommand = findTarget(proj, preferProjActions, toRun, singleMethod, debug, testRun, testInParallel, projectFilter);
+                    Pair<ActionProvider, String> providerAndCommand = findTarget(proj, preferProjActions, toRun, singleMethod, nestedClass, debug, testRun, testInParallel, projectFilter);
                     if (providerAndCommand != null) {
                         afterBuild.complete(providerAndCommand);
                         return;
@@ -548,7 +557,7 @@ public abstract class NbLaunchDelegate {
         return afterBuild;
     }
 
-    protected static @CheckForNull Pair<ActionProvider, String> findTarget(Project prj, boolean preferProjActions, FileObject toRun, SingleMethod singleMethod, boolean debug, boolean testRun, boolean testInParallel, ContainedProjectFilter projectFilter) {
+    protected static @CheckForNull Pair<ActionProvider, String> findTarget(Project prj, boolean preferProjActions, FileObject toRun, SingleMethod singleMethod, NestedClass nestedClass, boolean debug, boolean testRun, boolean testInParallel, ContainedProjectFilter projectFilter) {
         ClassPath sourceCP = ClassPath.getClassPath(toRun, ClassPath.SOURCE);
         FileObject fileRoot = sourceCP != null ? sourceCP.findOwnerRoot(toRun) : null;
         boolean mainSource;
@@ -560,7 +569,7 @@ public abstract class NbLaunchDelegate {
         ActionProvider provider = null;
         String command = null;
         Collection<ActionProvider> actionProviders = findActionProviders(prj);
-        Lookup testLookup = createTargetLookup(preferProjActions ? prj : null, singleMethod, toRun, projectFilter);
+        Lookup testLookup = createTargetLookup(preferProjActions ? prj : null, singleMethod, nestedClass, toRun, projectFilter);
         String[] actions;
        
         if (testInParallel) {
@@ -577,7 +586,7 @@ public abstract class NbLaunchDelegate {
                 if (debug && !mainSource) {
                     // We are calling COMMAND_DEBUG_TEST_SINGLE instead of a missing COMMAND_DEBUG_TEST
                     // This is why we need to add the file to the lookup
-                    testLookup = createTargetLookup(null, singleMethod, toRun, projectFilter);
+                    testLookup = createTargetLookup(null, singleMethod, nestedClass, toRun, projectFilter);
                 }
             } else {
                 actions = debug ? mainSource ? new String[] {ActionProvider.COMMAND_DEBUG_SINGLE}
@@ -638,7 +647,7 @@ public abstract class NbLaunchDelegate {
         return Pair.of(provider, command);
     }
 
-    static Lookup createTargetLookup(Project prj, SingleMethod singleMethod, FileObject toRun, ContainedProjectFilter projectFilter) {
+    static Lookup createTargetLookup(Project prj, SingleMethod singleMethod, NestedClass nestedClass, FileObject toRun, ContainedProjectFilter projectFilter) {
         List<Lookup> arr = new ArrayList<>();
         if (prj != null) {
             arr.add(Lookups.singleton(prj));
@@ -646,6 +655,10 @@ public abstract class NbLaunchDelegate {
         if (singleMethod != null) {
             Lookup methodLookup = Lookups.singleton(singleMethod);
             arr.add(methodLookup);
+        }
+        if (nestedClass != null) {
+            Lookup nestedClassLookup = Lookups.singleton(nestedClass);
+            arr.add(nestedClassLookup);
         }
         if (projectFilter != null) {
             Lookup projectLookup = Lookups.singleton(projectFilter);

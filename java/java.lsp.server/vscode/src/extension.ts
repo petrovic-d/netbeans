@@ -882,7 +882,7 @@ export function activate(context: ExtensionContext): VSNetBeansAPI {
         });
     }
 
-    const runDebug = async (noDebug: boolean, testRun: boolean, uri: any, methodName?: string, launchConfiguration?: string, project : boolean = false, testInParallel : boolean = false, projects: string[] | undefined = undefined) => {
+    const runDebug = async (noDebug: boolean, testRun: boolean, uri: any, methodName?: string, nestedClass?: string, launchConfiguration?: string, project : boolean = false, testInParallel : boolean = false, projects: string[] | undefined = undefined) => {
     const docUri = contextUri(uri);
         if (docUri) {
             // attempt to find the active configuration in the vsode launch settings; undefined if no config is there.
@@ -893,6 +893,9 @@ export function activate(context: ExtensionContext): VSNetBeansAPI {
             };
             if (methodName) {
                 debugConfig['methodName'] = methodName;
+            }
+            if (nestedClass) {
+                debugConfig['nestedClass'] = nestedClass;
             }
             if (launchConfiguration == '') {
                 if (debugConfig['launchConfiguration']) {
@@ -939,29 +942,29 @@ export function activate(context: ExtensionContext): VSNetBeansAPI {
         testAdapter?.registerRunInParallelProfile(projects);
     }));
 
-    context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.run.test', async (uri, methodName?, launchConfiguration?, testInParallel?, projects?) => {
-        await runDebug(true, true, uri, methodName, launchConfiguration, false, testInParallel, projects);
+    context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.run.test', async (uri, methodName?, nestedClass?, launchConfiguration?, testInParallel?, projects?) => {
+        await runDebug(true, true, uri, methodName, nestedClass, launchConfiguration, false, testInParallel, projects);
     }));
-    context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.debug.test', async (uri, methodName?, launchConfiguration?) => {
-        await runDebug(false, true, uri, methodName, launchConfiguration);
+    context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.debug.test', async (uri, methodName?, nestedClass?, launchConfiguration?) => {
+        await runDebug(false, true, uri, methodName, nestedClass, launchConfiguration);
     }));
-    context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.run.single', async (uri, methodName?, launchConfiguration?) => {
-        await runDebug(true, false, uri, methodName, launchConfiguration);
+    context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.run.single', async (uri, methodName?, nestedClass?, launchConfiguration?) => {
+        await runDebug(true, false, uri, methodName, nestedClass, launchConfiguration);
     }));
-    context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.debug.single', async (uri, methodName?, launchConfiguration?) => {
-        await runDebug(false, false, uri, methodName, launchConfiguration);
+    context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.debug.single', async (uri, methodName?, nestedClass?, launchConfiguration?) => {
+        await runDebug(false, false, uri, methodName, nestedClass, launchConfiguration);
     }));
     context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.project.run', async (node, launchConfiguration?) => {
-        return runDebug(true, false, contextUri(node)?.toString() || '',  undefined, launchConfiguration, true);
+        return runDebug(true, false, contextUri(node)?.toString() || '',  undefined, undefined, launchConfiguration, true);
     }));
     context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.project.debug', async (node, launchConfiguration?) => {
-        return runDebug(false, false, contextUri(node)?.toString() || '',  undefined, launchConfiguration, true);
+        return runDebug(false, false, contextUri(node)?.toString() || '',  undefined, undefined, launchConfiguration, true);
     }));
     context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.project.test', async (node, launchConfiguration?) => {
-        return runDebug(true, true, contextUri(node)?.toString() || '',  undefined, launchConfiguration, true);
+        return runDebug(true, true, contextUri(node)?.toString() || '',  undefined, undefined, launchConfiguration, true);
     }));
     context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.package.test', async (uri, launchConfiguration?) => {
-        await runDebug(true, true, uri, undefined, launchConfiguration);
+        await runDebug(true, true, uri, undefined, undefined, launchConfiguration);
     }));
     context.subscriptions.push(commands.registerCommand(COMMAND_PREFIX + '.open.stacktrace', async (uri, methodName, fileName, line) => {
         const location: string | undefined = uri ? await commands.executeCommand(COMMAND_PREFIX + '.resolve.stacktrace.location', uri, methodName, fileName) : undefined;
