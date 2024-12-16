@@ -52,6 +52,10 @@ export class NbTestAdapter {
         this.load();
     }
 
+    public testInParallelProfileExist(): boolean {
+        return this.parallelRunProfile ? true : false;
+    }
+
     public runTestsWithParallelParallel(projects?: string[]) {
         if (this.parallelRunProfile) {
             this.run(new TestRunRequest(undefined, undefined, this.parallelRunProfile), new CancellationTokenSource().token, true, projects);
