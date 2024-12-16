@@ -93,7 +93,7 @@ public final class NestedClass {
 
     @Override
     public boolean equals(Object obj) {
-        if ((obj == null) || (obj.getClass() != SingleMethod.class)) {
+        if ((obj == null) || (obj.getClass() != NestedClass.class)) {
             return false;
         }
         if (this == obj) {
