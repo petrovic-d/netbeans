@@ -24,11 +24,13 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
@@ -166,12 +168,14 @@ public class JUnitOutputListenerProvider implements OutputProcessor {
         Matcher match = outDirPattern.matcher(line);
         if (match.matches()) {
             File outputDir = new File(match.group(GROUP_FILE_NAME));
+            LOG.log(Level.FINER, "Line matches reports directory: {0}", outputDir);
             createSession(outputDir);
             return;
         }
         match = outDirPattern2.matcher(line);
         if (match.matches()) {
             File outputDir = new File(match.group(GROUP_FILE_NAME));
+            LOG.log(Level.FINER, "Line matches reports directory: {0}", outputDir);
             createSession(outputDir);
             return;
         }
@@ -184,12 +188,18 @@ public class JUnitOutputListenerProvider implements OutputProcessor {
             if (surefireRunningInParallel) {
                 // make sure results are displayed in case of a failure
                 runningTestClassesInParallel.add(match.group(1));
+                if (LOG.isLoggable(Level.FINE)) {
+                    LOG.log(Level.FINE, "Got running test: line {0}, class: {1}. Parallel run: {2}", new Object[] { line, match.group(1), 
+                        runningTestClassesInParallel.toString() });
+                }
             } else {
                 if (runningTestClass != null) {
+                    LOG.log(Level.FINE, "Got running test SINGLE: line {0}, class: {1}", new Object[] { line, match.group(1) });
                     // match.group(1) should be the FQN of a running test class but let's check to be on the safe side
                     // If the matcher matches it means that we have a new test class running,
                     // if not it probably means that this is user's text, e.g. "Running my cool test", so we can safely ignore it
                     if (!isFullJavaId(match.group(1))) {
+                        LOG.log(Level.FINE, "Not full java id match!");
                         return;
                     }
                     // tests are running sequentially, so update Test Results Window
@@ -201,6 +211,9 @@ public class JUnitOutputListenerProvider implements OutputProcessor {
         match = testSuiteStatsPattern.matcher(line);
         if (match.matches() && surefireRunningInParallel) {
             runningTestClass = match.group(6);
+            if (LOG.isLoggable(Level.FINE)) {
+                LOG.log(Level.FINE, "Got test statistics: {0}, running classes: {1}", new Object[] { match.group(6), runningTestClassesInParallel.toString() });
+            }
             if (runningTestClass != null) {
                 // runningTestClass should be the FQN of a running test class but let's check to be on the safe side
                 // If the matcher matches it means that we have a new test class running,
@@ -213,12 +226,15 @@ public class JUnitOutputListenerProvider implements OutputProcessor {
                 runningTestClassesInParallel.remove(runningTestClass);
                 // runningTestClass might be the last one so make it null to avoid appearing twice when sequenceEnd() is called
                 runningTestClass = null;
+                if (LOG.isLoggable(Level.FINE)) {
+                    LOG.log(Level.FINE, "Statistics done for {0}. Cleaning runnintTestClass, stillRunning: {1}", new Object[] { match.group(6), runningTestClassesInParallel.toString() });
+                }
             }
         }
     }
     
     private static final String SECONDS_REGEX = "s(?:ec(?:ond)?(?:s|\\(s\\))?)?"; //NOI18N
-    private static final String TESTSUITE_STATS_REGEX = "Tests run: +([0-9]+), +Failures: +([0-9]+), +Errors: +([0-9]+), +Skipped: +([0-9]+), +Time elapsed: +(.+)" + SECONDS_REGEX + " -+ in (.*)";
+    private static final String TESTSUITE_STATS_REGEX = "Tests run: +([0-9]+), +Failures: +([0-9]+), +Errors: +([0-9]+), +Skipped: +([0-9]+), +Time elapsed: +(.+)" + SECONDS_REGEX + " *(?: * <+ FAILURE! *)?-+ in (.*)";
     private static final Pattern testSuiteStatsPattern = Pattern.compile(TESTSUITE_STATS_REGEX);
     
     static boolean isTestSuiteStats(String line) {
@@ -383,9 +399,11 @@ public class JUnitOutputListenerProvider implements OutputProcessor {
         if (!outputDir2sessions.containsKey(nonNormalizedFile)) {
             File fil = FileUtil.normalizeFile(nonNormalizedFile);
             Project prj = FileOwnerQuery.getOwner(Utilities.toURI(fil));
+            LOG.log(Level.FINE, "Creating session for project {0}", prj);
             if (prj != null) {
                 NbMavenProject mvnprj = prj.getLookup().lookup(NbMavenProject.class);
                 if (mvnprj != null) {
+                    LOG.log(Level.FINE, "Maven project instance: {0}", mvnprj);
                     File projectFile = FileUtil.toFile(prj.getProjectDirectory());
                     if (projectFile != null) {
                         UnitTestsUsage.getInstance().logUnitTestUsage(Utilities.toURI(projectFile), getJUnitVersion(config.getMavenProject()));
@@ -404,6 +422,7 @@ public class JUnitOutputListenerProvider implements OutputProcessor {
                     }
                     TestSession session = new TestSession(createSessionName(mvnprj.getMavenProject().getId()), prj, TestSession.SessionType.TEST);
                     outputDir2sessions.put(nonNormalizedFile, session);
+                    LOG.log(Level.FINE, "Created session: {0}", session);
                     session.setRerunHandler(new RerunHandler() {
                         public @Override
                         void rerun() {
@@ -496,6 +515,8 @@ public class JUnitOutputListenerProvider implements OutputProcessor {
                     }
                 }
             }
+        } else {
+            LOG.log(Level.FINE, "Session for directory {0} already opened", nonNormalizedFile);
         }
     }
     
@@ -612,20 +633,35 @@ public class JUnitOutputListenerProvider implements OutputProcessor {
     }
 
     public @Override void sequenceFail(String sequenceId, OutputVisitor visitor) {
+        LOG.log(Level.FINE, "Got sequenceFail: {0}, line {1}", new Object[] { visitor.getContext().getCurrentProject(), visitor.getLine() });
         // try to get the failed test class. How can this be solved if it is not the first one in the list?
         if(surefireRunningInParallel) {
-            if(runningTestClassesInParallel.isEmpty()) {
-                // no test case is currently running, so do nothing (is this a more serious failure?)
-                return;
+            String saveRunningTestClass = runningTestClass;
+            
+            Project currentProject = visitor.getContext().getCurrentProject();
+            for (String s : runningTestClassesInParallel) {
+                File outputDir = locateOutputDirAndWait(s, false);
+                // match the output dir to the project
+                if (outputDir != null) {
+                    Project outputOwner = FileOwnerQuery.getOwner(FileUtil.toFileObject(outputDir));
+                    if (outputOwner == currentProject) {
+                        LOG.log(Level.FINE, "Found unfinished test {0} in {1}, trying to finish", new Object[] { s, currentProject });
+                        runningTestClass  = s;
+                        if (Objects.equals(saveRunningTestClass, s)) {
+                            saveRunningTestClass = null;
+                        }
+                        generateTest();
+                    }
+                }
             }
-            runningTestClass = runningTestClassesInParallel.get(0);
+            runningTestClass = saveRunningTestClass;
         }
         sequenceEnd(sequenceId, visitor);
     }
-
-    private void generateTest() {
+    
+    private File locateOutputDirAndWait(String candidateClass, boolean consume) {
         String suffix = reportNameSuffix == null ? "" : "-" + reportNameSuffix;
-        File outputDir = locateOutputDir(suffix);
+        File outputDir = locateOutputDir(candidateClass, suffix, consume);
         if (outputDir == null && surefireRunningInParallel) {
             // try waiting a bit to give time for the result file to be created
             try {
@@ -633,14 +669,26 @@ public class JUnitOutputListenerProvider implements OutputProcessor {
             } catch (InterruptedException ex) {
                 Exceptions.printStackTrace(ex);
             }
-            outputDir = locateOutputDir(suffix);
+            outputDir = locateOutputDir(candidateClass, suffix, consume);
         }
+        return outputDir;
+    }
+
+    private void generateTest() {
+        LOG.log(Level.FINE, "generateTest called for class {0}, ", new Object[] { runningTestClass });
+        File outputDir = locateOutputDirAndWait(runningTestClass, true);
         if (outputDir == null) {
             LOG.log(Level.WARNING, "Output directory is not created");
         }
+        String suffix = reportNameSuffix == null ? "" : "-" + reportNameSuffix;
         File report = outputDir != null ? new File(outputDir, "TEST-" + runningTestClass + suffix + ".xml") : null;
+        if (LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, "Reading report file {0}, class {1}, timestamp {2}", new Object[] { report, runningTestClass, report == null ? -1 : 
+                    new Date(report.lastModified()) });
+        }
         TestSession session = outputDir != null ? outputDir2sessions.get(outputDir) : null;
         if (outputDir == null || report == null || session == null) {
+            LOG.log(Level.FINE, "No session for outdir {0}", outputDir);
             return;
         }
         if (report.length() > 50 * 1024 * 1024) {
@@ -653,6 +701,7 @@ public class JUnitOutputListenerProvider implements OutputProcessor {
             try {
                 document = builder.build(report);
             } catch (Exception x) {
+                LOG.log(Level.WARNING, "Exception reading from file {0}", report);
                 try { // maybe the report file was not created yet, try waiting a bit and then try again
                     Thread.sleep(500);
                     document = builder.build(report);
@@ -663,6 +712,7 @@ public class JUnitOutputListenerProvider implements OutputProcessor {
                 }
             }
             if(document == null) {
+                LOG.log(Level.WARNING, "No document read from dir {0}", outputDir);
                 return;
             }
             Element testSuite = document.getRootElement();
@@ -761,17 +811,25 @@ public class JUnitOutputListenerProvider implements OutputProcessor {
         }
     }
 
-    private File locateOutputDir(String suffix) {
+    private File locateOutputDir(String runningTestClass, String suffix, boolean consume) {
         Set<File> outputDirs = runningTestClass2outputDirs.computeIfAbsent(runningTestClass, t -> new HashSet<>());
+        LOG.log(Level.FINE, "trying output dirs for class {0}: {1}, sessions: {2}", new Object[] { runningTestClass, outputDirs, outputDir2sessions.keySet() });
         for (File outputDir : outputDir2sessions.keySet()) {
             if (!outputDirs.contains(outputDir)) {
                 // When using reuseForks=true and a forkCount value larger than one,
                 // the same output is produced many times, so show it only once in Test Results window
                 File report = new File(outputDir, "TEST-" + runningTestClass + suffix + ".xml");
                 if (report.isFile() && report.lastModified() >= startTimeStamp) { //#219097 ignore results from previous invokation.
-                    outputDirs.add(outputDir);
+                    LOG.log(Level.FINE, "Adding output dir {0} for report {1}", new Object[] { outputDir, report });
+                    if (consume) {
+                        outputDirs.add(outputDir);
+                    }
                     return outputDir;
+                } else {
+                    LOG.log(Level.FINE, "Report file  {0} exists, but is old; ignoring", report);
                 }
+            } else {
+                LOG.log(Level.FINE, "Output dir already created, not reporting again: {0}", outputDir.getAbsolutePath());
             }
         }
         return null;

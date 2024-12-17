@@ -36,7 +36,7 @@ import java.util.Optional;
  * 
  * @author Dusan Petrovic
  * 
- * @since 1.90
+ * @since 1.99
  */
 public final class ContainedProjectFilter {
     

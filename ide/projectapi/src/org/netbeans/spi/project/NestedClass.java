@@ -34,7 +34,7 @@ import org.openide.filesystems.FileObject;
  * 
  * @author Dusan Petrovic
  * 
- * @since 1.90
+ * @since 1.99
  */
 public final class NestedClass {
  
@@ -49,7 +49,7 @@ public final class NestedClass {
      * @param file file to be kept in the object
      * @exception  java.lang.IllegalArgumentException
      *             if the file or class name is {@code null}
-     * @since 1.90
+     * @since 1.99
      */
     public NestedClass(String className, FileObject file) {
         super();
@@ -67,7 +67,7 @@ public final class NestedClass {
      * Returns the file identification.
      *
      * @return file held by this object
-     * @since 1.90
+     * @since 1.99
      */
     public FileObject getFile() {
         return file;
@@ -77,7 +77,7 @@ public final class NestedClass {
      * Returns name of a nested class within a file.
      *
      * @return class name held by this object
-     * @since 1.90
+     * @since 1.99
      */
     public String getClassName() {
         return className;

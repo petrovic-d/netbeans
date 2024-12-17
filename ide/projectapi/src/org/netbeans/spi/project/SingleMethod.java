@@ -65,7 +65,7 @@ public final class SingleMethod {
      * 
      * @exception  java.lang.IllegalArgumentException
      *             if the nested class name is {@code null}
-     * @since 1.90
+     * @since 1.99
      */
     public SingleMethod(FileObject file, String methodName, NestedClass nestedClass) {
         this(file, methodName);
@@ -80,7 +80,7 @@ public final class SingleMethod {
      * Returns the nested class containing the method.
      *
      * @return nested class containing the method
-     * @since 1.90
+     * @since 1.99
      */
     public NestedClass getNestedClass() {
         return nestedClass;
