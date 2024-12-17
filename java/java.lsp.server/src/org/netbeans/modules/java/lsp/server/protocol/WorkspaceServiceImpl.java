@@ -43,6 +43,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -124,6 +125,7 @@ import org.netbeans.modules.java.lsp.server.LspServerState;
 import org.netbeans.modules.java.lsp.server.Utils;
 import org.netbeans.modules.java.lsp.server.debugging.attach.AttachConfigurations;
 import org.netbeans.modules.java.lsp.server.debugging.attach.AttachNativeConfigurations;
+import org.netbeans.modules.java.lsp.server.progress.ModuleInfo;
 import org.netbeans.modules.java.lsp.server.project.LspProjectInfo;
 import org.netbeans.modules.java.lsp.server.singlesourcefile.SingleFileOptionsQueryImpl;
 import org.netbeans.modules.java.source.ElementHandleAccessor;
@@ -403,7 +405,8 @@ public final class WorkspaceServiceImpl implements WorkspaceService, LanguageCli
                         String url = Utils.toUri(fo);
                         Project owner = FileOwnerQuery.getOwner(fo);
                         String moduleName = owner != null ? ProjectUtils.getInformation(owner).getDisplayName(): null;
-                        String modulePath = getModuleTestPath(owner);
+                        List<String> paths = getModuleTestPaths(owner);
+                        String modulePath = firstModulePath(paths, moduleName);
                         Map<String, TestSuiteInfo> suite2infos = new LinkedHashMap<>();
                         for (TestMethodController.TestMethod testMethod : methods) {
                             TestSuiteInfo suite = suite2infos.computeIfAbsent(testMethod.getTestClassName(), name -> {
@@ -808,18 +811,31 @@ public final class WorkspaceServiceImpl implements WorkspaceService, LanguageCli
         throw new UnsupportedOperationException("Command not supported: " + params.getCommand());
     }
     
-    private static String getModuleTestPath(Project project) {        
+    private String firstModulePath(List<String> paths, String moduleName) {
+        if (paths == null || paths.isEmpty()) {
+            return null;
+        } else if (paths.size() > 1) {
+            LOG.log(Level.WARNING, "Mutliple test roots are not yet supported for module {0}", moduleName);
+        }
+        return paths.iterator().next();
+    }
+    
+    private static List<String> getModuleTestPaths(Project project) {        
         if (project == null) {
             return null;
         }
         SourceGroup[] sourceGroups = ProjectUtils.getSources(project).getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
+        Set<String> paths = new LinkedHashSet<>();
         for (SourceGroup sourceGroup : sourceGroups) {
-            String testSourcePath = sourceGroup.getRootFolder().getPath();
-            if (testSourcePath.endsWith("/src/test/java")) { // NOI18N
-                return sourceGroup.getRootFolder().getPath();
+            URL[] urls = UnitTestForSourceQuery.findUnitTests(sourceGroup.getRootFolder());
+            for (URL u : urls) {
+                FileObject f = URLMapper.findFileObject(u);
+                if (f != null) {
+                    paths.add(f.getPath());
+                }
             }
         }
-        return null;
+        return paths.isEmpty() ? null : new ArrayList<>(paths);
     }
     
     private class ProjectInfoWorker {

@@ -18,25 +18,27 @@
  */
 package org.netbeans.modules.java.lsp.server.progress;
 
+import java.util.List;
+
 /**
  *
- * @author dusanpetrovic
+ * @author Dusan Petrovic
  */
 public final class ModuleInfo {
     
     private final String moduleName;
-    private final String modulePath;
+    private final List<String> testRoots;
 
-    public ModuleInfo(String moduleName, String modulePath) {
+    public ModuleInfo(String moduleName, List<String> testRoots) {
         this.moduleName = moduleName;
-        this.modulePath = modulePath;
+        this.testRoots = testRoots;
     }
     
     public String getModuleName() {
         return moduleName;
     }
 
-    public String getModulePath() {
-        return modulePath;
+    public List<String> getTestRoots() {
+        return testRoots;
     }
 }

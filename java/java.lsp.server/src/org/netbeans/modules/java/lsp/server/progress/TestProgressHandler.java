@@ -18,17 +18,23 @@
  */
 package org.netbeans.modules.java.lsp.server.progress;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import org.eclipse.lsp4j.debug.OutputEventArguments;
 import org.eclipse.lsp4j.debug.services.IDebugProtocolClient;
 import org.netbeans.api.extexecution.print.LineConvertors;
 import org.netbeans.api.java.project.JavaProjectConstants;
+import org.netbeans.api.java.queries.UnitTestForSourceQuery;
 import org.netbeans.api.project.Project;
 import org.netbeans.api.project.ProjectUtils;
 import org.netbeans.api.project.SourceGroup;
@@ -43,13 +49,15 @@ import org.netbeans.modules.java.lsp.server.protocol.NbCodeLanguageClient;
 import org.netbeans.modules.java.lsp.server.protocol.TestProgressParams;
 import org.netbeans.modules.java.lsp.server.protocol.TestSuiteInfo;
 import org.openide.filesystems.FileObject;
+import org.openide.filesystems.URLMapper;
 
 /**
  *
  * @author Dusan Balek
  */
 public final class TestProgressHandler implements TestResultDisplayHandler.Spi<ModuleInfo> {
-
+    private static final Logger LOG = Logger.getLogger(TestProgressHandler.class.getName());
+    
     private final NbCodeLanguageClient lspClient;
     private final IDebugProtocolClient debugClient;
     private final String uri;
@@ -73,15 +81,25 @@ public final class TestProgressHandler implements TestResultDisplayHandler.Spi<M
             debugClient.output(output);
         }
     }
+    
+    private String firstModulePath(ModuleInfo token) {
+        List<String> paths = token.getTestRoots();
+        if (paths == null || paths.isEmpty()) {
+            return null;
+        } else if (paths.size() > 1) {
+            LOG.log(Level.WARNING, "Mutliple test roots are not yet supported for module {0}", token.getModuleName());
+        }
+        return paths.iterator().next();
+    }
 
     @Override
     public void displaySuiteRunning(ModuleInfo token, String suiteName) {
-        lspClient.notifyTestProgress(new TestProgressParams(uri, new TestSuiteInfo(suiteName, TestSuiteInfo.State.Started).setModuleName(token.getModuleName()).setModulePath(token.getModulePath())));
+        lspClient.notifyTestProgress(new TestProgressParams(uri, new TestSuiteInfo(suiteName, TestSuiteInfo.State.Started).setModuleName(token.getModuleName()).setModulePath(firstModulePath(token))));
     }
 
     @Override
     public void displaySuiteRunning(ModuleInfo token, TestSuite suite) {
-        lspClient.notifyTestProgress(new TestProgressParams(uri, new TestSuiteInfo(suite.getName(), TestSuiteInfo.State.Started).setModuleName(token.getModuleName()).setModulePath(token.getModulePath())));
+        lspClient.notifyTestProgress(new TestProgressParams(uri, new TestSuiteInfo(suite.getName(), TestSuiteInfo.State.Started).setModuleName(token.getModuleName()).setModulePath(firstModulePath(token))));
     }
 
     @Override
@@ -114,7 +132,7 @@ public final class TestProgressHandler implements TestResultDisplayHandler.Spi<M
         String state = statusToState(report.getStatus());
         FileObject fo = fileLocations.size() == 1 ? fileLocations.values().iterator().next() : null;
         
-        lspClient.notifyTestProgress(new TestProgressParams(uri, new TestSuiteInfo(report.getSuiteClassName(), token.getModuleName(), token.getModulePath(),
+        lspClient.notifyTestProgress(new TestProgressParams(uri, new TestSuiteInfo(report.getSuiteClassName(), token.getModuleName(), firstModulePath(token),
                 fo != null ? Utils.toUri(fo) : null, null, state, new ArrayList<>(testCases.values()))));
     }
 
@@ -156,21 +174,25 @@ public final class TestProgressHandler implements TestResultDisplayHandler.Spi<M
     private static ModuleInfo getModuleInfo(TestSession session) {
         Project project = session.getProject();
         String moduleName = project != null ? ProjectUtils.getInformation(project).getDisplayName() : null;
-        String modulePath = getModuleTestPath(project);
-        return new ModuleInfo(moduleName, modulePath);
+        List<String> testPaths = getModuleTestPaths(project);
+        return new ModuleInfo(moduleName, testPaths);
     }
     
-    private static String getModuleTestPath(Project project) {        
+    private static List<String> getModuleTestPaths(Project project) {        
         if (project == null) {
             return null;
         }
         SourceGroup[] sourceGroups = ProjectUtils.getSources(project).getSourceGroups(JavaProjectConstants.SOURCES_TYPE_JAVA);
+        Set<String> paths = new LinkedHashSet<>();
         for (SourceGroup sourceGroup : sourceGroups) {
-            String testSourcePath = sourceGroup.getRootFolder().getPath();
-            if (testSourcePath.endsWith("/src/test/java")){
-                return sourceGroup.getRootFolder().getPath();
+            URL[] urls = UnitTestForSourceQuery.findUnitTests(sourceGroup.getRootFolder());
+            for (URL u : urls) {
+                FileObject f = URLMapper.findFileObject(u);
+                if (f != null) {
+                    paths.add(f.getPath());
+                }
             }
         }
-        return null;
+        return paths.isEmpty() ? null : new ArrayList<>(paths);
     }
 }
