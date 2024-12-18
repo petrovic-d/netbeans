@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 import org.eclipse.lsp4j.debug.OutputEventArguments;
 import org.eclipse.lsp4j.debug.services.IDebugProtocolClient;
 import org.netbeans.api.extexecution.print.LineConvertors;
@@ -168,8 +167,6 @@ public final class TestProgressHandler implements TestResultDisplayHandler.Spi<M
                 throw new IllegalStateException("Unexpected testsuite status: " + status);
         }
     }
-
-    private static final Pattern PATTERN = Pattern.compile("Gradle Test Run :(.*):test"); // NOI18N
 
     private static ModuleInfo getModuleInfo(TestSession session) {
         Project project = session.getProject();
