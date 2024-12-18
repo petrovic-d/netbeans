@@ -1487,6 +1487,12 @@ public class SourceUtils {
         int idx = relativePath.indexOf('.');
         String rel = idx < 0 ? relativePath : relativePath.substring(0, idx);
         String className = rel.replace('/', '.');
+        int lastDotIndex = className.lastIndexOf('.');
+        String fqnForNestedClass = null;
+        if (lastDotIndex > -1 && nestedClass != null) {
+            String packageName = className.substring(0, lastDotIndex);
+            fqnForNestedClass = nestedClass.getFQN(packageName, "$");
+        }
         FileObject rsFile = cachedCP.findResource(rel + '.' + FileObjects.RS);
         if (rsFile != null) {
             List<String> lines = new ArrayList<>();
@@ -1495,8 +1501,7 @@ public class SourceUtils {
                 while ((line = in.readLine())!=null) {
                     if (className.equals(line)) {
                         return className;
-                    } else if (nestedClass != null && nestedClass.getClassName() != null &&
-                            line.contains("$") && line.split("\\$", 2)[1].equals(nestedClass.getClassName().replace(".", "$"))) {
+                    } else if (fqnForNestedClass != null && fqnForNestedClass.equals(line)) {
                         return line;
                     }
                     lines.add(line);

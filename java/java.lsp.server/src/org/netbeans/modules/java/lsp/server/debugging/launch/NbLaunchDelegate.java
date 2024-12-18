@@ -134,7 +134,10 @@ public abstract class NbLaunchDelegate {
         NbProcessConsole ioContext = new NbProcessConsole(consoleMessages);
         NestedClass nestedClass;
         if (nestedClassName != null) {
-           nestedClass = new NestedClass(nestedClassName, toRun);
+            int topLevelClassSeparatorIdx = nestedClassName.indexOf(".");
+            String topLevelClassName = nestedClassName.substring(0, topLevelClassSeparatorIdx);
+            String nestedName = nestedClassName.substring(topLevelClassSeparatorIdx + 1);
+            nestedClass = new NestedClass(nestedName, topLevelClassName, toRun);
         } else {
             nestedClass = null;
         }

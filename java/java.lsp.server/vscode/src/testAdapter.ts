@@ -93,12 +93,13 @@ export class NbTestAdapter {
                             }
                         })
                         const idx = item.id.indexOf(':');
-                        const nestedClassIdx = item.id.indexOf('$');
+                        const isNestedClass = item.id.includes('$');
+                        const topLevelClassName = item.id.lastIndexOf('.');
                         let nestedClass: string | undefined;
-                        if (nestedClassIdx > 0) {
+                        if (isNestedClass && topLevelClassName > 0) {
                             nestedClass = idx < 0 
-                                ? item.id.slice(nestedClassIdx + 1)
-                                : item.id.substring(nestedClassIdx + 1, idx);
+                                ? item.id.slice(topLevelClassName + 1)
+                                : item.id.substring(topLevelClassName + 1, idx);
                             nestedClass = nestedClass.replace('$', '.');
                         }
                         if (!cancellation.isCancellationRequested) {
