@@ -97,8 +97,9 @@ export class NbTestAdapter {
                         let nestedClass: string | undefined;
                         if (nestedClassIdx > 0) {
                             nestedClass = idx < 0 
-                                ? item.id.slice(nestedClassIdx + 1) 
+                                ? item.id.slice(nestedClassIdx + 1)
                                 : item.id.substring(nestedClassIdx + 1, idx);
+                            nestedClass = nestedClass.replace('$', '.');
                         }
                         if (!cancellation.isCancellationRequested) {
                             await commands.executeCommand(request.profile?.kind === TestRunProfileKind.Debug ? COMMAND_PREFIX + '.debug.single' : COMMAND_PREFIX + '.run.single', item.uri.toString(), idx < 0 ? undefined : item.id.slice(idx + 1), nestedClass);
@@ -165,8 +166,8 @@ export class NbTestAdapter {
         if (testItem.parent && testItem.children.size > 0) {
             this.dispatchEvent({
                 name: testItem.id,
-                moduleName: testItem.parent?.id,
-                modulePath: testItem.parent?.uri?.path,
+                moduleName: testItem.parent.id,
+                modulePath: testItem.parent.uri?.path,
                 state,
             });
         } else if (testItem.children.size === 0) {

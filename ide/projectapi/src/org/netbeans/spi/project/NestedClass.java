@@ -29,7 +29,7 @@ import org.openide.filesystems.FileObject;
  * Example:
  * If we have following structure: ParentClass (parent-of) ChildClass1 (parent-of) ChildClass2,
  * for ChildClass1 className field would contain "ChildClass1", and 
- * for ChildClass2 className field would contain "ChildClass1$ChildClass2"
+ * for ChildClass2 className field would contain "ChildClass1.ChildClass2"
  * </p>
  * 
  * @author Dusan Petrovic
@@ -38,8 +38,8 @@ import org.openide.filesystems.FileObject;
  */
 public final class NestedClass {
  
-    private FileObject file;
-    private String className;
+    private final FileObject file;
+    private final String className;
 
     /**
      * Creates a new instance holding the specified identification

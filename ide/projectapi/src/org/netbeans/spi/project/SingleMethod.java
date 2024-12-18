@@ -19,6 +19,7 @@
 
 package org.netbeans.spi.project;
 
+import java.util.Objects;
 import org.openide.filesystems.FileObject;
 
 /**
@@ -29,10 +30,26 @@ import org.openide.filesystems.FileObject;
  */
 public final class SingleMethod {
 
-    private FileObject file;
-    private String methodName;
-    private NestedClass nestedClass;
+    private final FileObject file;
+    private final String methodName;
+    private final NestedClass nestedClass;
 
+    /**
+     * Creates a new instance holding the specified identification
+     * of a method/function in a file.
+     *
+     * @param nestedClass nested class containing the method
+     * @param file file to be kept in the object
+     * @param methodName name of a method inside the file
+     * 
+     * @since 1.99
+     */
+    private SingleMethod(NestedClass nestedClass, FileObject file, String methodName) {
+        this.methodName = methodName;
+        this.file = file;
+        this.nestedClass = nestedClass;
+    }
+    
     /**
      * Creates a new instance holding the specified identification
      * of a method/function in a file.
@@ -44,22 +61,13 @@ public final class SingleMethod {
      * @since 1.19
      */
     public SingleMethod(FileObject file, String methodName) {
-        super();
-        if (file == null) {
-            throw new IllegalArgumentException("file is <null>");
-        }
-        if (methodName == null) {
-            throw new IllegalArgumentException("methodName is <null>");
-        }
-        this.file = file;
-        this.methodName = methodName;
+        this(null, nonNull(file, "file"), nonNull(methodName, "methodName"));
     }
     
     /**
      * Creates a new instance holding the specified identification
      * of a method/function in nested class in a file.
      *
-     * @param file file to be kept in the object
      * @param methodName name of a method inside the file     
      * @param nestedClass nested class containing the method
      * 
@@ -67,14 +75,16 @@ public final class SingleMethod {
      *             if the nested class name is {@code null}
      * @since 1.99
      */
-    public SingleMethod(FileObject file, String methodName, NestedClass nestedClass) {
-        this(file, methodName);
-        if (nestedClass == null) {
-            throw new IllegalArgumentException("nestedClass is <null>");
-        }
-        this.nestedClass = nestedClass;
+    public SingleMethod(String methodName, NestedClass nestedClass) {
+        this(nonNull(nestedClass, "nestedClass"), nonNull(nestedClass.getFile(), "file"), nonNull(methodName, "methodName"));
     }
     
+    private static <T> T nonNull(T value, String paramName) {
+        if (value == null) {
+            throw new IllegalArgumentException(paramName + " is <null>");
+        }
+        return value;
+    }
     
     /**
      * Returns the nested class containing the method.
@@ -126,7 +136,7 @@ public final class SingleMethod {
             return false;
         }
         SingleMethod other = (SingleMethod) obj;
-        return other.file.equals(file) && other.methodName.equals(methodName) && other.nestedClass.equals(nestedClass);
+        return other.file.equals(file) && other.methodName.equals(methodName) && Objects.equals(other.nestedClass, nestedClass);
     }
 
     @Override
@@ -134,7 +144,7 @@ public final class SingleMethod {
         int hash = 7;
         hash = 29 * hash + this.file.hashCode();
         hash = 29 * hash + this.methodName.hashCode();
-        hash = 29 * hash + this.nestedClass.hashCode();
+        hash = 29 * hash + Objects.hashCode(this.nestedClass);
         return hash;
     }
 }

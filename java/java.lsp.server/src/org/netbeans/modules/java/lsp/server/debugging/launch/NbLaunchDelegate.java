@@ -141,7 +141,7 @@ public abstract class NbLaunchDelegate {
         SingleMethod singleMethod;
         if (method != null) {
             singleMethod = nestedClass != null ?
-                    new SingleMethod(toRun, method, nestedClass)
+                    new SingleMethod(method, nestedClass)
                     : new SingleMethod(toRun, method);
         } else {
             singleMethod = null;

@@ -1480,7 +1480,7 @@ public class SourceUtils {
      * @param relativePath input source file path relative to the corresponding source root
      * @param nestedClass nested class which name is searched
      * @return class name for the corresponding input source file
-     * @since 2.73
+     * @since 2.74
      */
     public static String classNameFor(ClasspathInfo info, String relativePath, NestedClass nestedClass) {
         ClassPath cachedCP = ClasspathInfoAccessor.getINSTANCE().getCachedClassPath(info, PathKind.COMPILE);
@@ -1495,8 +1495,8 @@ public class SourceUtils {
                 while ((line = in.readLine())!=null) {
                     if (className.equals(line)) {
                         return className;
-                    } else if (nestedClass != null && 
-                            line.contains("$") && line.split("\\$", 2)[1].equals(nestedClass.getClassName())) {
+                    } else if (nestedClass != null && nestedClass.getClassName() != null &&
+                            line.contains("$") && line.split("\\$", 2)[1].equals(nestedClass.getClassName().replace(".", "$"))) {
                         return line;
                     }
                     lines.add(line);

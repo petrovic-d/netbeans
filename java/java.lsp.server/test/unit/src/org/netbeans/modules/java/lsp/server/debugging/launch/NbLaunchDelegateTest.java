@@ -58,7 +58,7 @@ public class NbLaunchDelegateTest {
     public void testFileObjectsLookupWithSingleMethod() throws Exception {
         FileObject fo = FileUtil.createMemoryFileSystem().getRoot().createData("test-with-method.txt");
         NestedClass nc = new NestedClass("ChildClass", fo);
-        SingleMethod m = new SingleMethod(fo, "main", nc);
+        SingleMethod m = new SingleMethod("main", nc);
 
         Lookup lkp = NbLaunchDelegate.createTargetLookup(null, m, nc, fo, null);
         assertEquals(fo, lkp.lookup(FileObject.class));
@@ -95,7 +95,7 @@ public class NbLaunchDelegateTest {
         assertNotNull("Project dir recognized", prj);
 
         NestedClass nc = new NestedClass("ChildClass", xml);
-        SingleMethod m = new SingleMethod(xml, "main", nc);
+        SingleMethod m = new SingleMethod("main", nc);
         Lookup lkp = NbLaunchDelegate.createTargetLookup(prj, m, nc, xml, null);
         assertEquals("File object is available", xml, lkp.lookup(FileObject.class));
         DataObject obj = lkp.lookup(DataObject.class);

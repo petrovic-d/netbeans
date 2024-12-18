@@ -23,6 +23,8 @@ import java.util.List;
 /**
  *
  * @author Dusan Petrovic
+ * 
+ * @since 2.11.0
  */
 public final class ModuleInfo {
     

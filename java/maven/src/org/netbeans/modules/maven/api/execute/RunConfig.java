@@ -82,7 +82,7 @@ public interface RunConfig {
     /**
      * Options/switches passed to maven.
      * @return a read-only copy of the current maven options
-     * @since 2.166
+     * @since 2.167
      */
     @NonNull Map<? extends String,? extends String> getOptions();
     
@@ -90,14 +90,14 @@ public interface RunConfig {
      * Sets option that will be passed to maven.
      * @param key a key that represents option/switch name
      * @param value a value of the option/switch
-     * @since 2.166
+     * @since 2.167
      */
     void setOption(@NonNull String key, @NullAllowed String value);
 
     /** 
      * Adds options/switches that will be passed to maven.
      * @param options options/switches that will be added
-     * @since 2.166
+     * @since 2.167
      */
     void addOptions(@NonNull Map<String, String> options);
     

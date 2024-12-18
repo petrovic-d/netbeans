@@ -86,7 +86,7 @@ is the proper place.
         <change id="RunConfig-options">
             <api name="general"/>
             <summary>RunConfig provides access to Maven options</summary>
-            <version major="2" minor="166"/>
+            <version major="2" minor="167"/>
             <date day="5" month="11" year="2024"/>
             <author login="petrovic-d"/>
             <compatibility addition="yes" semantic="compatible"/>
